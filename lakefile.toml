@@ -1,0 +1,18 @@
+name = "LeanMqtt"
+version = "0.1.0"
+defaultTargets = ["leanmqtt"]
+
+[[lean_lib]]
+name = "LeanMqtt"
+
+[[lean_lib]]
+name = "Helpers"
+
+[[lean_exe]]
+name = "leanmqtt"
+root = "Main"
+
+[[require]]
+name = "batteries"
+scope = "leanprover-community"
+rev = "24241822ef9d3e7f6a3bcc53ad136e12663db8f3"
