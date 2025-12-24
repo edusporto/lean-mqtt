@@ -1,21 +1,9 @@
+import LeanMqtt.Serialization.Primitives
 import Std.Tactic.BVDecide
 import Helpers.Proofs
 
-abbrev Parser (α : Type) := StateT (List UInt8) Option α
-
-theorem parser_app_is_run {α} {l : List UInt8} (p : Parser α) :
-  p l = p.run l :=
-  rfl
-
-def UInt8.serialize (b : UInt8) : List UInt8 :=
-  [b]
-
-def UInt8.parser : Parser UInt8 := do
-  match (← get) with
-  | [] => none
-  | b :: rest =>
-    set rest
-    some b
+namespace Mqtt
+open Mqtt
 
 theorem UInt8.roundtrip (b : UInt8) (rest : List UInt8) :
   UInt8.parser.run (b.serialize ++ rest) = some (b, rest) := by
@@ -32,16 +20,6 @@ theorem UInt8.roundtrip (b : UInt8) (rest : List UInt8) :
       Option.bind_eq_bind, Option.bind_some, Option.some.injEq, Prod.mk.injEq
     ] at *
     exact ⟨h.left.symm, h.right.symm⟩
-
-def bytesParser (n : Nat) : Parser (List UInt8) := do
-  let s ← get
-  if s.length < n then
-    none
-  else
-    let chunk := s.take n
-    let rest  := s.drop n
-    set rest
-    return chunk
 
 theorem bytesParser_len (n : Nat) (l inp rest : List UInt8) :
   (bytesParser n).run inp = some (l, rest) → l.length = n := by
@@ -69,18 +47,6 @@ theorem bytesParser_reconstruct (n : Nat) (input : List UInt8) (chunk rest : Lis
     apply Eq.symm
     apply List.take_append_drop n input
 
-def bytesParserWithProof (n : Nat) : Parser { l : List UInt8 // l.length = n } := do
-  let s ← get
-  if h : s.length < n then
-    none
-  else
-    let chunk := s.take n
-    let rest  := s.drop n
-    set rest
-    -- Prove that the chunk has the correct length
-    have h_len : chunk.length = n :=
-      List.length_take_of_le (Nat.ge_of_not_lt h)
-    return ⟨chunk, h_len⟩
 
 theorem roundtrip_bytes (l : List UInt8) (rest : List UInt8) :
   (bytesParser l.length).run (l ++ rest) = some (l, rest) := by
@@ -120,17 +86,6 @@ theorem bytesParserWithProof_eq_parser_success (n : Nat)
     rcases h_simple with ⟨h_take, h_drop⟩
     exact ⟨h_take, h_len_parser, h_drop⟩
 
-def UInt16.serialize (n : UInt16) : List UInt8 :=
-  let b1 := (n >>> 8).toUInt8
-  let b2 := n.toUInt8
-  [b1, b2]
-
-def UInt16.parser : Parser UInt16 := do
-  let bytes ← bytesParser 2
-  match bytes with
-  | [b1, b2] => return (b1.toUInt16 <<< 8) ||| b2.toUInt16
-  | _ => none
-
 theorem UInt16.parser_len (n : UInt16) :
   n.serialize.length = 2 := by
   simp only [UInt16.serialize, List.length_cons, List.length_nil, Nat.zero_add, Nat.reduceAdd]
@@ -142,23 +97,6 @@ theorem UInt16.roundtrip (n : UInt16) (rest : List UInt8) :
   rw [roundtrip_bytes _ _]
   simp [UInt16.serialize]
   bv_decide
-
-def UInt32.serialize (n : UInt32) : List UInt8 :=
-  let b1 := (n >>> 24).toUInt8
-  let b2 := (n >>> 16).toUInt8
-  let b3 := (n >>> 8).toUInt8
-  let b4 := n.toUInt8
-  [b1, b2, b3, b4]
-
-def UInt32.parser : Parser UInt32 := do
-  let bytes ← bytesParser 4
-  match bytes with
-  | [b1, b2, b3, b4] =>
-    return (b1.toUInt32 <<< 24) |||
-           (b2.toUInt32 <<< 16) |||
-           (b3.toUInt32 <<< 8)  |||
-            b4.toUInt32
-  | _ => none
 
 theorem UInt32.parser_len (n : UInt32) :
   n.serialize.length = 4 := by
@@ -175,37 +113,11 @@ theorem UInt32.roundtrip (n : UInt32) (rest : List UInt8) :
   ]
   bv_decide
 
--- Note: we do `s.toUTF.data.toList` instead of `s.toUTF.toList` because
--- the `ByteArray.toList` implementation has fewer theorems relating it
--- to `List`s than `Array.toList`.
-def String.serialize (s : String) := s.toUTF8.data.toList
-
-def String.parser (len : Nat) : Parser String := do
-  let bytes ← bytesParser len
-  let txt := bytes.toByteArray
-  if h_valid : txt.IsValidUTF8
-    then some (String.fromUTF8 txt h_valid)
-    else none
-
-def String.parserWithProof (n : Nat) : Parser { s : String // s.utf8ByteSize = n } := do
-  let ⟨bytes, h_len⟩ ← bytesParserWithProof n
-  let txt := bytes.toByteArray
-  if h_valid : txt.IsValidUTF8 then
-    let s := String.fromUTF8 txt h_valid
-
-    have h_size : s.utf8ByteSize = n := by
-      simp only [utf8ByteSize]
-      simp only [s, fromUTF8, txt, List.size_toByteArray]
-      exact h_len
-
-    return ⟨s, h_size⟩
-  else
-    none
 
 theorem String.serialize_len (s : String) :
   s.serialize.length = s.utf8ByteSize := by
-  rw [utf8ByteSize_ofByteArray]
-  simp only [String.serialize, toUTF8_eq_bytes]
+  rw [String.utf8ByteSize_ofByteArray]
+  simp only [String.serialize, String.toUTF8_eq_bytes]
   exact @Array.size_eq_length_toList UInt8 s.bytes.data
 
 theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
@@ -222,7 +134,7 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
       simp at h
       have h_len := bytesParser_len _ _ _ _ h_parse
       rw [←h.1]
-      simp only [fromUTF8, utf8ByteSize_ofByteArray, List.size_toByteArray]
+      simp only [String.fromUTF8, String.utf8ByteSize_ofByteArray, List.size_toByteArray]
       exact h_len
     · contradiction
 
@@ -256,7 +168,7 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
 theorem String.roundtrip (s : String) (rest : List UInt8) :
   (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
   simp only [String.serialize, String.parser]
-  simp only [toUTF8_eq_bytes, StateT.run_bind, Option.bind_eq_bind, Option.bind]
+  simp only [String.toUTF8_eq_bytes, StateT.run_bind, Option.bind_eq_bind, Option.bind]
   rw [roundtrip_bytes]
   simp only
   split
@@ -324,57 +236,95 @@ theorem String.parserWithProof_eq_parser_success (n : Nat) (inp : List UInt8)
       · exact h_simple.right
     · contradiction
 
+theorem Str.roundtrip (s : Str) (rest : List UInt8) :
+  Str.parser.run (s.serialize ++ rest) = some (s, rest) := by
+  simp only [Str.parser, Str.serialize]
+  simp only [
+    bind_pure_comp, List.append_assoc, StateT.run_bind, StateT.run_map,
+    Option.map_eq_map, Option.bind_eq_bind
+  ]
 
-/-
-/-- Simple Serializer: just a list of bytes for now (easier to prove than ByteArray) -/
-abbrev Serializer := List UInt8
+  rw [UInt16.roundtrip _ _]
+  simp only [Option.bind_some, Option.map]
 
-/-- The Parser Monad: State is the remaining bytes -/
-abbrev Parser (α : Type) := StateT (List UInt8) Option α
+  have h_len_eq : s.len.val.toNat = s.val.serialize.length := by
+    rw [String.serialize_len]
+    have h := s.len.property
+    -- simp [Coe.coe, GetLength.length] at h
+    exact h
 
-/-- 1. Define the Primitive: Read one byte -/
-def parseByte : Parser UInt8 := do
-  match (← get) with
-  | [] => failure
-  | b :: rest =>
-    set rest
-    return b
+  /-
+    To use the String.roundtrip theorem, we need to substitute `s.len.val.toNat`
+    with `s.val.serialize.length`. However, due to dependent type shenanigans,
+    we can't do this substitution in `String.parserWithProof`. So, we do the
+    substitution in the simple parser (`String.parser`), then use the projection
+    lemma (`String.parserWithProof_eq_parser_success`) to show it also holds for
+    `String.parserWithProof`.
+  -/
+  have h_simple := String.roundtrip s.val rest
 
-/-- 2. Define the Serializer for the Primitive -/
-def serializeByte (b : UInt8) : Serializer := [b]
+  rw [←h_len_eq] at h_simple
+  have ⟨_, h_dep⟩ := String.parserWithProof_eq_parser_success _ _ _ _ h_simple
 
-/-- 3. The Roundtrip Lemma for the Primitive -/
--- "If we parse a serialized byte followed by arbitrary 'rest',
---  we get the byte back and the state becomes 'rest'."
-theorem parse_serialize_byte_id (b : UInt8) (rest : List UInt8) :
-  parseByte.run (serializeByte b ++ rest) = some (b, rest) := by
-  -- The proof is trivial by definition
-  rfl
+  rw [h_dep]
 
-structure MyPacket where
-  a : UInt8
-  b : UInt8
-  deriving Repr, DecidableEq
+theorem StrPair.roundtrip (p : StrPair) (rest : List UInt8) :
+  StrPair.parser.run (p.serialize ++ rest) = some (p, rest) := by
+  simp only [StrPair.parser, StrPair.serialize]
+  simp only [
+    bind_pure_comp, List.append_assoc, StateT.run_bind, StateT.run_map,
+    Option.map_eq_map, Option.map, Option.bind_eq_bind, Option.bind
+  ]
+  simp only [Str.roundtrip _ _]
 
-def parsePacket : Parser MyPacket := do
-  let a ← parseByte
-  let b ← parseByte
-  return { a, b }
+theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
+  BinaryData.parser.run (b.serialize ++ rest) = some (b, rest) := by
+  simp only [BinaryData.parser, BinaryData.serialize]
+  simp [Option.bind, Option.map]
 
-def serializePacket (p : MyPacket) : Serializer :=
-  serializeByte p.a ++ serializeByte p.b
+  rw [UInt16.roundtrip _ _]
+  simp only
 
-/-- The Proof for the Complex Type -/
-theorem parse_serialize_packet_id (p : MyPacket) (rest : List UInt8) :
-  parsePacket.run (serializePacket p ++ rest) = some (p, rest) := by
-  -- Expand definitions
-  simp [parsePacket, serializePacket]
-  -- Apply the lemma for the first byte (p.a)
-  rw [parse_serialize_byte_id]
-  simp
-  -- Apply the lemma for the second byte (p.b)
-  rw [parse_serialize_byte_id]
-  simp
-  -- Done
-  rfl
+  have h_len_eq : b.len.val.toNat = b.val.toList.length := by
+    simp only [Array.length_toList]
+    have h := b.len.property
+    exact h
+
+  /-
+    Due to dependent type shenanigans, we can't rewrite the current goal
+    with `h_len_eq`. So, we rewrite it in the simpler parser, and prove
+    that it implies our current goal. See `Str.roundtrip` for more.
+  -/
+  have h_simple := roundtrip_bytes b.val.toList rest
+  rw [←h_len_eq] at h_simple
+  have ⟨_, h_dep⟩ := bytesParserWithProof_eq_parser_success _ _ _ _ h_simple
+
+  rw [h_dep]
+
+-- TODO: this proof is beyond my pay grade
+theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
+  VarInt.parser.run (v.serialize ++ rest) = some (v, rest) :=
+  sorry
+
+/--
+  Executable checker: Returns true if 'n' survives the roundtrip.
+  Note: We use strict equality checks.
 -/
+def checksOut (n : VarInt) : Bool :=
+  let bytes := VarInt.serialize n
+  match VarInt.parser.run bytes with
+  | some (v, []) => v.val == n
+  | _ => false
+
+/-- Checks 'checksOut' for all numbers from 'start' up to 'limit' -/
+def checkRange (start limit : Nat) : Bool :=
+  if start >= limit then
+    true
+  else if h : ¬(start < VarInt.limit) then
+    false
+  else if checksOut ⟨start, Decidable.of_not_not h⟩ then
+    checkRange (start + 1) limit
+  else
+    false
+
+end Mqtt
