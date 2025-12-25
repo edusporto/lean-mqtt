@@ -1,6 +1,6 @@
-import LeanMqtt.Serialization.Packets.FixedHeader
-import LeanMqtt.Proofs.Primitives
 import Std.Tactic.BVDecide
+import LeanMqtt.Packets.FixedHeader.Basic
+import LeanMqtt.Primitives.Proofs
 
 namespace Mqtt
 open Mqtt

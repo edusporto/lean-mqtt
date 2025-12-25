@@ -1,12 +1,14 @@
-import LeanMqtt.Defs.Primitives
+import LeanMqtt.Core.Parser.Basic
+import LeanMqtt.Core.WithLength
+
+instance : Coe UInt16 Nat where
+  coe := UInt16.toNat
+instance : Coe UInt32 Nat where
+  coe := UInt32.toNat
 
 namespace Mqtt
 
-abbrev Parser (α : Type) := StateT (List UInt8) Option α
-
-theorem parser_app_is_run {α} {l : List UInt8} (p : Parser α) :
-  p l = p.run l :=
-  rfl
+/- ========================= UInt8 ========================= -/
 
 def UInt8.serialize (b : UInt8) : List UInt8 :=
   [b]
@@ -18,28 +20,7 @@ def UInt8.parser : Parser UInt8 := do
     set rest
     some b
 
-def bytesParser (n : Nat) : Parser (List UInt8) := do
-  let s ← get
-  if s.length < n then
-    none
-  else
-    let chunk := s.take n
-    let rest  := s.drop n
-    set rest
-    return chunk
-
-def bytesParserWithProof (n : Nat) : Parser { l : List UInt8 // l.length = n } := do
-  let s ← get
-  if h : s.length < n then
-    none
-  else
-    let chunk := s.take n
-    let rest  := s.drop n
-    set rest
-    -- Prove that the chunk has the correct length
-    have h_len : chunk.length = n :=
-      List.length_take_of_le (Nat.ge_of_not_lt h)
-    return ⟨chunk, h_len⟩
+/- ========================= UInt16 ========================= -/
 
 def UInt16.serialize (n : UInt16) : List UInt8 :=
   let b1 := (n >>> 8).toUInt8
@@ -51,6 +32,8 @@ def UInt16.parser : Parser UInt16 := do
   match bytes with
   | [b1, b2] => return (b1.toUInt16 <<< 8) ||| b2.toUInt16
   | _ => none
+
+/- ========================= UInt32 ========================= -/
 
 def UInt32.serialize (n : UInt32) : List UInt8 :=
   let b1 := (n >>> 24).toUInt8
@@ -69,63 +52,23 @@ def UInt32.parser : Parser UInt32 := do
             b4.toUInt32
   | _ => none
 
--- TODO: benchmark if `ByteArray.toList arr` is faster than `Array.toList arr.data`
-def String.serialize (s : String) := s.toUTF8.toList
+/- ========================= VarInt ========================= -/
 
-def String.parser (len : Nat) : Parser String := do
-  let bytes ← bytesParser len
-  let txt := bytes.toByteArray
-  if h_valid : txt.IsValidUTF8
-    then some (String.fromUTF8 txt h_valid)
-    else none
+/--
+  The maximum value for a
+  [Variable Byte Integer](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011)
+  is 268_435_455 (128^4 - 1).
+-/
+abbrev VarInt.limit : Nat := 268_435_456
 
-def String.parserWithProof (n : Nat) : Parser { s : String // s.utf8ByteSize = n } := do
-  let ⟨bytes, h_len⟩ ← bytesParserWithProof n
-  let txt := bytes.toByteArray
-  if h_valid : txt.IsValidUTF8 then
-    let s := String.fromUTF8 txt h_valid
+/--
+  Type representing a
+  [Variable Byte Integer](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011).
+-/
+abbrev VarInt := Fin VarInt.limit
 
-    have h_size : s.utf8ByteSize = n := by
-      simp only [String.utf8ByteSize]
-      simp only [s, String.fromUTF8, txt, List.size_toByteArray]
-      exact h_len
-
-    return ⟨s, h_size⟩
-  else
-    none
-
-def Str.serialize (s : Str) : List UInt8 :=
-  UInt16.serialize (s.len) ++ String.serialize s.val
-
-def Str.parser : Parser Str := do
-  let len ← UInt16.parser
-  let ⟨str, h⟩ ← String.parserWithProof len.toNat
-
-  have h_len : Coe.coe len = GetLength.length str := by
-    simp [Coe.coe, GetLength.length]; exact h.symm
-
-  return {val := str, len := ⟨len, h_len⟩ }
-
-def StrPair.serialize (p : StrPair) : List UInt8 :=
-  Str.serialize (p.fst) ++ Str.serialize (p.snd)
-
-def StrPair.parser : Parser StrPair := do
-  let s1 ← Str.parser
-  let s2 ← Str.parser
-  return ⟨s1, s2⟩
-
-def BinaryData.serialize (b : BinaryData) :=
-  UInt16.serialize (b.len) ++ b.val.toList
-
-def BinaryData.parser : Parser BinaryData := do
-  let len ← UInt16.parser
-  let ⟨l, h⟩ ← bytesParserWithProof len.toNat
-  let b := l.toArray
-
-  have h_len : Coe.coe len = GetLength.length b := by
-    simp [Coe.coe, GetLength.length]; apply h.symm
-
-  return {val := b, len := ⟨len, h_len⟩ }
+instance : Coe VarInt Nat where
+  coe v := v.toNat
 
 def VarInt.serialize (v : VarInt) : List UInt8 :=
   if h : v < 128 then
@@ -166,5 +109,77 @@ def VarInt.parser : Parser VarInt := do
         loop (mult * 128) val fuel'
 
   loop 1 0 4
+
+/- ========================= String ========================= -/
+
+-- TODO: benchmark if `ByteArray.toList arr` is faster than `Array.toList arr.data`
+def String.serialize (s : String) := s.toUTF8.toList
+
+def String.parser (len : Nat) : Parser String := do
+  let bytes ← bytesParser len
+  let txt := bytes.toByteArray
+  if h_valid : txt.IsValidUTF8
+    then some (String.fromUTF8 txt h_valid)
+    else none
+
+def String.parserWithProof (n : Nat) : Parser { s : String // s.utf8ByteSize = n } := do
+  let ⟨bytes, h_len⟩ ← bytesParserWithProof n
+  let txt := bytes.toByteArray
+  if h_valid : txt.IsValidUTF8 then
+    let s := String.fromUTF8 txt h_valid
+
+    have h_size : s.utf8ByteSize = n := by
+      simp only [String.utf8ByteSize]
+      simp only [s, String.fromUTF8, txt, List.size_toByteArray]
+      exact h_len
+
+    return ⟨s, h_size⟩
+  else
+    none
+
+/- ========================= Str ========================= -/
+
+abbrev Str := WithLength String UInt16
+
+def Str.serialize (s : Str) : List UInt8 :=
+  UInt16.serialize (s.len) ++ String.serialize s.val
+
+def Str.parser : Parser Str := do
+  let len ← UInt16.parser
+  let ⟨str, h⟩ ← String.parserWithProof len.toNat
+
+  have h_len : Coe.coe len = GetLength.length str := by
+    simp [Coe.coe, GetLength.length]; exact h.symm
+
+  return {val := str, len := ⟨len, h_len⟩ }
+
+/- ========================= StrPair ========================= -/
+
+abbrev StrPair := Str × Str
+
+def StrPair.serialize (p : StrPair) : List UInt8 :=
+  Str.serialize (p.fst) ++ Str.serialize (p.snd)
+
+def StrPair.parser : Parser StrPair := do
+  let s1 ← Str.parser
+  let s2 ← Str.parser
+  return ⟨s1, s2⟩
+
+/- ========================= BinaryData ========================= -/
+
+abbrev BinaryData := WithLength (Array UInt8) UInt16
+
+def BinaryData.serialize (b : BinaryData) :=
+  UInt16.serialize (b.len) ++ b.val.toList
+
+def BinaryData.parser : Parser BinaryData := do
+  let len ← UInt16.parser
+  let ⟨l, h⟩ ← bytesParserWithProof len.toNat
+  let b := l.toArray
+
+  have h_len : Coe.coe len = GetLength.length b := by
+    simp [Coe.coe, GetLength.length]; apply h.symm
+
+  return {val := b, len := ⟨len, h_len⟩ }
 
 end Mqtt

@@ -1,8 +1,41 @@
-import LeanMqtt.Serialization.Packets.VarHeader
-import LeanMqtt.Proofs.Packets.Properties
-import LeanMqtt.Proofs.Primitives
+import LeanMqtt.Packets.VarHeader.Basic
+import LeanMqtt.Packets.VarHeader.Properties
+import LeanMqtt.Packets.VarHeader.Variations
+import LeanMqtt.Primitives.Proofs
 
 namespace Mqtt
+open Mqtt
+
+def Property.roundtrip_kind (k : Property.Kind) (val : Property.typeOfKind k) (rest : List UInt8) :
+  (Property.parserKind k).run (Property.serializeKind k val ++ rest) = some (val, rest) := by
+  simp [Property.parserKind, Property.serializeKind]
+  split
+  repeat' simp only
+  · simp only [UInt8.roundtrip]
+  · simp only [UInt16.roundtrip]
+  · simp only [UInt32.roundtrip]
+  · simp only [VarInt.roundtrip]
+  · simp only [BinaryData.roundtrip]
+  · simp only [Str.roundtrip]
+  · simp only [StrPair.roundtrip]
+  · contradiction
+
+theorem Property.roundtrip (p : Property) (rest : List UInt8) :
+  Property.parser.run (p.serialize ++ rest) = some (p, rest) := by
+  simp [Property.parser, Property.serialize]
+  simp [Option.bind, Option.map]
+  simp [VarInt.roundtrip]
+  simp [Property.roundtrip_kind]
+
+-- TODO: prove
+theorem parsePropsLoop_len (chunk : List UInt8) (l : List Property) :
+  parsePropsLoop chunk = some l → chunk.length = (l.foldl (fun acc p => acc + p.byteSize) 0) := by
+  -- simp [GetLength.length]
+  sorry
+
+theorem Properties.roundtrip (ps : Properties) (rest : List UInt8) :
+  Properties.parser.run (ps.serialize ++ rest) = some (ps, rest) := by
+  sorry
 
 def Var_Connect.roundtrip (v : Var_Connect) (rest : List UInt8) :
   Var_Connect.parser.run (v.serialize ++ rest) = some (v, rest) := by

@@ -1,6 +1,6 @@
-import LeanMqtt.Serialization.Packets.Packet
-import LeanMqtt.Proofs.Packets.FixedHeader
-import LeanMqtt.Proofs.Packets.VarHeader
+import LeanMqtt.Packets.Packet.Basic
+import LeanMqtt.Packets.FixedHeader.Proofs
+import LeanMqtt.Packets.VarHeader.Proofs
 
 namespace Mqtt
 

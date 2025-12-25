@@ -1,6 +1,8 @@
-import LeanMqtt.Serialization.Primitives
 import Std.Tactic.BVDecide
 import Helpers.Proofs
+
+import LeanMqtt.Core.Parser.Proofs
+import LeanMqtt.Primitives.Basic
 
 namespace Mqtt
 open Mqtt
@@ -20,71 +22,6 @@ theorem UInt8.roundtrip (b : UInt8) (rest : List UInt8) :
       Option.bind_eq_bind, Option.bind_some, Option.some.injEq, Prod.mk.injEq
     ] at *
     exact ⟨h.left.symm, h.right.symm⟩
-
-theorem bytesParser_len (n : Nat) (l inp rest : List UInt8) :
-  (bytesParser n).run inp = some (l, rest) → l.length = n := by
-  simp [bytesParser]
-  split
-  · intro h_len
-    contradiction
-  · next h_len =>
-    intro h
-    simp at h
-    have ⟨h_l, h_rest⟩ := h
-    subst h_l
-    simp [List.length_take]
-    omega
-
-theorem bytesParser_reconstruct (n : Nat) (input : List UInt8) (chunk rest : List UInt8) :
-  (bytesParser n).run input = some (chunk, rest) → input = chunk ++ rest := by
-  simp [bytesParser]
-  split
-  · intro; contradiction
-  · next h_len =>
-    simp
-    intro h1 h2
-    rw [←h1, ←h2]
-    apply Eq.symm
-    apply List.take_append_drop n input
-
-
-theorem roundtrip_bytes (l : List UInt8) (rest : List UInt8) :
-  (bytesParser l.length).run (l ++ rest) = some (l, rest) := by
-  simp [bytesParser]
-  split
-  · omega
-  · simp
-
-theorem roundtrip_bytes_with_proof (l : List UInt8) (rest : List UInt8) :
-  (bytesParserWithProof l.length).run (l ++ rest) = some (⟨l, rfl⟩, rest) := by
-  simp [bytesParserWithProof]
-  split
-  · omega
-  · simp
-
-theorem bytesParserWithProof_eq_parser_success (n : Nat)
-  (l : List UInt8) (inp rest : List UInt8) :
-  (bytesParser n).run inp = some (l, rest) →
-  ∃ h, (bytesParserWithProof n).run inp = some (⟨l, h⟩, rest) := by
-  intro h_simple
-  have h_len_parser := bytesParser_len _ _ _ _ h_simple
-  simp only [bytesParser, bytesParserWithProof] at *
-  simp only [bind_pure_comp, StateT.run_bind, StateT.run_get,
-    Option.pure_def, Option.bind_eq_bind, Option.bind_some
-  ] at *
-  split at h_simple
-  · contradiction
-  · next h_len =>
-    simp only [StateT.run_map, StateT.run_set, Option.pure_def,
-      Option.map_eq_map, Option.map_some, Option.some.injEq, Prod.mk.injEq
-    ] at h_simple
-    simp only [dif_neg h_len]
-    simp only [StateT.run_map, StateT.run_set, Option.pure_def,
-      Option.map_eq_map, Option.map_some, Option.some.injEq, Prod.mk.injEq,
-      Subtype.mk.injEq, exists_and_left, exists_prop
-    ]
-    rcases h_simple with ⟨h_take, h_drop⟩
-    exact ⟨h_take, h_len_parser, h_drop⟩
 
 theorem UInt16.parser_len (n : UInt16) :
   n.serialize.length = 2 := by
@@ -274,6 +211,13 @@ theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
   have ⟨_, h_dep⟩ := bytesParserWithProof_eq_parser_success _ _ _ _ h_simple
 
   rw [h_dep]
+
+-- theorem varint_algebra (v mult acc : Nat) :
+--     (v % 128) * mult + acc + (v / 128) * (mult * 128) = acc + v * mult := by
+--   calc
+--     _ = acc + mult * (v % 128) + mult * 128 * (v / 128) := by ac_rfl
+--     _ = acc + mult * (v % 128 + 128 * (v / 128))        := by rw [←Nat.mul_add]
+--     _ = acc + mult * v                                  := by rw [Nat.mod_add_div]
 
 -- TODO: this proof is beyond my pay grade
 theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
