@@ -69,10 +69,8 @@ def UInt32.parser : Parser UInt32 := do
             b4.toUInt32
   | _ => none
 
--- Note: we do `s.toUTF.data.toList` instead of `s.toUTF.toList` because
--- the `ByteArray.toList` implementation has fewer theorems relating it
--- to `List`s than `Array.toList`.
-def String.serialize (s : String) := s.toUTF8.data.toList
+-- TODO: benchmark if `ByteArray.toList arr` is faster than `Array.toList arr.data`
+def String.serialize (s : String) := s.toUTF8.toList
 
 def String.parser (len : Nat) : Parser String := do
   let bytes ← bytesParser len

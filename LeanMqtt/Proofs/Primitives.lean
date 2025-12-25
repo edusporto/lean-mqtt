@@ -118,6 +118,7 @@ theorem String.serialize_len (s : String) :
   s.serialize.length = s.utf8ByteSize := by
   rw [String.utf8ByteSize_ofByteArray]
   simp only [String.serialize, String.toUTF8_eq_bytes]
+  rw [Helpers.bytearray_tolist_eq_data_tolist, ByteArray.size]
   exact @Array.size_eq_length_toList UInt8 s.bytes.data
 
 theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
@@ -138,33 +139,6 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
       exact h_len
     · contradiction
 
--- theorem String.roundtrip (s : String) (rest : List UInt8) :
---   (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
---   simp only [String.serialize, String.parser]
---   simp only [toUTF8_eq_bytes, StateT.run_bind, Option.bind_eq_bind, Option.bind]
---   split
---   { next val h_eq =>
---     simp [roundtrip_bytes _ _, reduceCtorEq] at h_eq
---   }
---   { next val h_eq =>
---     rw [roundtrip_bytes _ _] at h_eq
---     simp only
---     injection h_eq with h_eq
---     split
---     { next h_utf8 =>
---       simp [liftM, monadLift, MonadLift.monadLift]
---       subst h_eq
---       simp only [and_true]
---       congr
---       apply bytearray_list_roundtrip
---     }
---     { next h_wrong =>
---       rw [←h_eq] at h_wrong
---       simp only [bytearray_list_roundtrip] at h_wrong
---       exact absurd s.isValidUTF8 h_wrong
---     }
---   }
-
 theorem String.roundtrip (s : String) (rest : List UInt8) :
   (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
   simp only [String.serialize, String.parser]
@@ -173,9 +147,9 @@ theorem String.roundtrip (s : String) (rest : List UInt8) :
   simp only
   split
   · next h =>
-    simp [String.fromUTF8, bytearray_list_roundtrip]
+    simp [String.fromUTF8, Helpers.bytearray_list_roundtrip]
   · next h =>
-    simp [bytearray_list_roundtrip] at h
+    simp [Helpers.bytearray_list_roundtrip] at h
     exact absurd s.isValidUTF8 h
 
 theorem String.roundtrip_proof (s : String) (rest : List UInt8) :
@@ -197,11 +171,11 @@ theorem String.roundtrip_proof (s : String) (rest : List UInt8) :
       subst h_eq
       simp only [and_true]
       congr
-      apply bytearray_list_roundtrip
+      apply Helpers.bytearray_list_roundtrip
     }
     { next h_wrong =>
       rw [←h_eq] at h_wrong
-      simp [String.serialize, bytearray_list_roundtrip] at h_wrong
+      simp [String.serialize, Helpers.bytearray_list_roundtrip] at h_wrong
       exact absurd s.isValidUTF8 h_wrong
     }
   }
