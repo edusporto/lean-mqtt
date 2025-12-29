@@ -230,11 +230,11 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
       · apply Nat.lt_trans h₁; decide
     simp [if_pos this]
 
-    -- have : v.val % 128 < limit := by
-    --   rw [Nat.mod_eq_of_lt]
-    --   · simp
-    --   · apply h₁
-    -- simp [dif_pos this]
+    have : v.val % 128 < limit := by
+      rw [Nat.mod_eq_of_lt]
+      · simp
+      · apply h₁
+    simp [dif_pos this]
 
     apply Fin.eq_of_val_eq -- same as doing `ext`
     simp only [Nat.mod_succ_eq_iff_lt, Nat.succ_eq_add_one, Nat.reduceAdd]
@@ -266,9 +266,9 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
         · apply Nat.lt_trans h₂; decide
       simp [if_pos this]
 
-      -- have : v.val / (128 : VarInt).val % 128 * 128 + v.val % 128 < limit := by
-      --   grind
-      -- simp [dif_pos this]
+      have : v.val / (128 : VarInt).val % 128 * 128 + v.val % 128 < limit := by
+        grind
+      simp [dif_pos this]
 
       apply Fin.eq_of_val_eq
       simp
@@ -293,11 +293,11 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
           grind
         simp [if_pos this]
 
-        -- have :
-        --   v.val / (128 : VarInt).val / (128 : VarInt).val % 128 * 16384 +
-        --   (v.val / (128 : VarInt).val % 128 * 128 + v.val % 128) < limit
-        -- := by grind
-        -- simp [dif_pos this]
+        have :
+          v.val / (128 : VarInt).val / (128 : VarInt).val % 128 * 16384 +
+          (v.val / (128 : VarInt).val % 128 * 128 + v.val % 128) < limit
+        := by grind
+        simp [dif_pos this]
 
         apply Fin.eq_of_val_eq
         simp
@@ -324,12 +324,12 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
             grind
           simp [if_pos this]
 
-          -- have :
-          --   v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val % 128 * 2097152 +
-          --     (v.val / (128 : VarInt).val / (128 : VarInt).val % 128 * 16384 +
-          --     (v.val / (128 : VarInt).val % 128 * 128 + v.val % 128)) < limit := by
-          --   grind
-          -- simp [dif_pos this]
+          have :
+            v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val % 128 * 2097152 +
+              (v.val / (128 : VarInt).val / (128 : VarInt).val % 128 * 16384 +
+              (v.val / (128 : VarInt).val % 128 * 128 + v.val % 128)) < limit := by
+            grind
+          simp [dif_pos this]
 
           ext
           simp

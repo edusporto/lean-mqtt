@@ -85,95 +85,37 @@ decreasing_by
   · exact Nat.lt_of_lt_of_le (by decide) h
   · decide
 
--- def VarInt.parser : Parser VarInt := do
---   -- We use an accumulator loop to handle the Little-Endian decoding
---   -- mult: The current place value (1, 128, 128^2, ...)
---   -- acc:  The accumulated value so far
---   -- fuel: Max bytes to read (4)
---   let rec loop (mult : Nat) (acc : Nat) (fuel : Nat) : Parser VarInt := do
---     match fuel with
---     | 0 => none -- Exceeded 4 bytes (Malformed Packet)
---     | fuel' + 1 =>
---       let b ← UInt8.parser
---       let val := (b % 128).toNat * mult + acc
-
---       if b < 128 then
---         -- Continuation bit is 0: We are done.
---         -- Check if the result fits in the VarInt limit.
---         if h : val < VarInt.limit then
---           some ⟨val, h⟩
---         else
---           none -- Value exceeds protocol limit
---       else
---         -- Continuation bit is 1: Keep reading.
---         loop (mult * 128) val fuel'
-
---   loop 1 0 4
-
 def VarInt.parser : Parser VarInt := do
-  -- We add two proof arguments (h_inv and h_acc) to the loop.
-  -- These are erased at runtime but allow us to prove safety.
-  let rec loop (mult : Nat) (acc : Nat) (fuel : Nat)
-      (h_inv : mult * 128 ^ fuel = VarInt.limit)
-      (h_acc : acc < mult) : Parser VarInt := do
+  -- We use an accumulator loop to handle the Little-Endian decoding
+  -- mult: The current place value (1, 128, 128^2, ...)
+  -- acc:  The accumulated value so far
+  -- fuel: Max bytes to read (4)
+  let rec loop (mult : Nat) (acc : Nat) (fuel : Nat) : Parser VarInt := do
     match fuel with
-    | 0 => none -- Malformed Packet (Too many bytes)
+    | 0 => none -- Exceeded 4 bytes (Malformed Packet)
     | fuel' + 1 =>
-      -- 1. Setup the math for the next step
-      -- We know mult * 128^(fuel' + 1) = limit.
-      -- Rewrite this to (mult * 128) * 128^fuel' = limit
-      have h_next_inv : (mult * 128) * 128 ^ fuel' = VarInt.limit := by
-        rw [Nat.pow_succ, ←Nat.mul_assoc] at h_inv
-        grind only
-
-      -- 2. Read the byte
       let b ← UInt8.parser
-      let n := (b % 128).toNat
-
-      -- 3. Calculate new value: val = n * mult + acc
-      let val := n * mult + acc
-
-      -- 4. Prove that the new value fits within the next multiplier scope.
-      -- We need to prove: val < mult * 128
-      have h_val_bound : val < mult * 128 := by
-        -- We know n < 128, so n ≤ 127
-        have h_n : n ≤ 127 := by
-          have : n < 128 := Nat.mod_lt (b.toNat) (by decide : 0 < 128)
-          omega
-        -- val = n * mult + acc ≤ 127 * mult + acc
-        -- Since acc < mult, val < 127 * mult + mult = 128 * mult
-        calc
-          n * mult + acc ≤ 127 * mult + acc := Nat.add_le_add_right (Nat.mul_le_mul_right mult h_n) acc
-          _              < 127 * mult + mult := Nat.add_lt_add_left h_acc _
-          _              = 128 * mult        := by simp [Nat.succ_mul, Nat.add_comm]
-          _              = mult * 128        := Nat.mul_comm _ _
+      let val := (b % 128).toNat * mult + acc
 
       if b < 128 then
         -- Continuation bit is 0: We are done.
-        -- We need to return `Fin VarInt.limit`.
-        -- We must prove `val < VarInt.limit`.
-        have h_final : val < VarInt.limit := by
-          -- We know val < mult * 128
-          -- We know (mult * 128) * 128^fuel' = limit
-          -- Therefore (mult * 128) ≤ limit (since 128^fuel' ≥ 1)
-          apply Nat.lt_of_lt_of_le h_val_bound
-          have h_scale : 1 ≤ 128 ^ fuel' := Nat.one_le_pow fuel' 128 (by decide)
-          have h_mult_le : mult * 128 ≤ VarInt.limit := by
-            rw [←h_next_inv]
-            exact Nat.le_mul_of_pos_right _ h_scale
-          exact h_mult_le
 
-        -- Return the value directly constructed with the proof
-        some ⟨val, h_final⟩
+        -- The following check is always true. We do it to get a proof that
+        -- the value fits on a `VarInt`.
+        -- A different implementation without this check, along with a
+        -- performance comparison, is available at
+        -- https://gist.github.com/edusporto/2e995ccda37ab0949de03ab30da3ef49.
+        -- The performance improvement was too small to justify the added
+        -- complexity.
+        if h : val < VarInt.limit then
+          some ⟨val, h⟩
+        else
+          none -- Value exceeds protocol limit
       else
         -- Continuation bit is 1: Keep reading.
-        loop (mult * 128) val fuel' h_next_inv h_val_bound
+        loop (mult * 128) val fuel'
 
-  -- Initial call:
-  -- mult = 1, acc = 0, fuel = 4
-  -- Proof 1: 1 * 128^4 = VarInt.limit (True by definition)
-  -- Proof 2: 0 < 1 (True)
-  loop 1 0 4 (by rfl) (by decide)
+  loop 1 0 4
 
 /- ========================= String ========================= -/
 
