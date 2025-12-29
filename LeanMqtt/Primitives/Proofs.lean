@@ -336,18 +336,6 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
           grind
         else
           simp [h₄, UInt8.parser]
-
-          have :
-            ¬ UInt8.ofNat (v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val)
-            % 128 + 128 < 128 := by
-            simp [UInt8.lt_iff_toNat_lt]
-            grind
-          simp [if_neg this]
-
-          unfold VarInt.parser.loop
-          unfold VarInt.serialize
-          simp
-
           -- Since `v` is limited by `VarInt.limit`, h₄ must be false.
           -- Grind solves the contradiction for us
           grind
