@@ -71,16 +71,16 @@ instance : Coe VarInt Nat where
   coe v := v.toNat
 
 def VarInt.serialize (v : VarInt) : List UInt8 :=
-  if h : v < 128 then
+  if h : v.val < 128 then
     [v.val.toUInt8]
   else
-    let byte := ((v.val % 128) + 128).toUInt8
+    let byte := v.val.toUInt8 % 128 + 128
     byte :: VarInt.serialize (v / 128)
 termination_by v.val
 decreasing_by
   -- We need to prove: v.val / 128 < v.val
-  -- We know 'h' is false, so v.val >= 128
-  simp only [Fin.isValue, Fin.not_lt] at h
+  -- We know v.val >= 128
+  simp only [Nat.not_lt] at h
   apply Nat.div_lt_self
   · exact Nat.lt_of_lt_of_le (by decide) h
   · decide
@@ -95,7 +95,7 @@ def VarInt.parser : Parser VarInt := do
     | 0 => none -- Exceeded 4 bytes (Malformed Packet)
     | fuel' + 1 =>
       let b ← UInt8.parser
-      let val := (b.toNat % 128) * mult + acc
+      let val := (b % 128).toNat * mult + acc
 
       if b < 128 then
         -- Continuation bit is 0: We are done.

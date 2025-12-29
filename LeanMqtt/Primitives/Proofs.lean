@@ -212,17 +212,260 @@ theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
 
   rw [h_dep]
 
--- theorem varint_algebra (v mult acc : Nat) :
---     (v % 128) * mult + acc + (v / 128) * (mult * 128) = acc + v * mult := by
---   calc
---     _ = acc + mult * (v % 128) + mult * 128 * (v / 128) := by ac_rfl
---     _ = acc + mult * (v % 128 + 128 * (v / 128))        := by rw [←Nat.mul_add]
---     _ = acc + mult * v                                  := by rw [Nat.mod_add_div]
+theorem varint_algebra (v mult acc : Nat) :
+    (v % 128) * mult + acc + (v / 128) * (mult * 128) = acc + v * mult := by
+  calc
+    _ = acc + mult * (v % 128) + mult * 128 * (v / 128)     := by ac_rfl
+    _ = acc + (mult * (v % 128) + mult * 128 * (v / 128))   := by ac_rfl
+    _ = acc + (mult * (v % 128) + mult * (128 * (v / 128))) := by ac_rfl
+    _ = acc + mult * (v % 128 + 128 * (v / 128))            := by rw [←Nat.mul_add]
+    _ = acc + mult * v                                      := by rw [Nat.mod_add_div]
+    _ = acc + v * mult                                      := by ac_rfl
 
 -- TODO: this proof is beyond my pay grade
+-- theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
+--   VarInt.parser.run (v.serialize ++ rest) = some (v, rest) :=
+--   sorry
+
 theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
-  VarInt.parser.run (v.serialize ++ rest) = some (v, rest) :=
-  sorry
+    VarInt.parser.run (v.serialize ++ rest) = some (v, rest) := by
+  simp [VarInt.parser]
+  unfold VarInt.parser.loop
+  unfold VarInt.serialize
+  simp [Option.bind]
+
+  if h₁ : v.val < 128 then
+    simp [h₁, UInt8.parser]
+
+    have : UInt8.ofNat v.val < 128 := by
+      rw [UInt8.lt_iff_toNat_lt]
+      simp only [UInt8.toNat_ofNat', Nat.reducePow, UInt8.reduceToNat]
+      rw [Nat.mod_eq_of_lt]
+      · exact h₁
+      · apply Nat.lt_trans h₁; decide
+    simp [if_pos this]
+
+    have : v.val % 128 < limit := by
+      rw [Nat.mod_eq_of_lt]
+      · simp
+      · apply h₁
+    simp [dif_pos this]
+
+    apply Fin.eq_of_val_eq -- same as doing `ext`
+    simp only [Nat.mod_succ_eq_iff_lt, Nat.succ_eq_add_one, Nat.reduceAdd]
+    exact h₁
+  else
+    simp [h₁, UInt8.parser]
+
+    have : ¬ UInt8.ofNat v.val % 128 + 128 < 128 := by
+      rw [UInt8.lt_iff_toNat_lt]
+      simp [UInt8.toNat_ofNat', Nat.reducePow, UInt8.reduceToNat]
+      rw [Nat.mod_eq_of_lt]
+      · simp
+      · have h_mod : ↑v % 128 < 128 := Nat.mod_lt ↑v (by decide)
+        exact Nat.add_lt_add_right h_mod 128
+    simp [if_neg this]
+
+    unfold VarInt.parser.loop
+    unfold VarInt.serialize
+    simp [Option.bind]
+
+    if h₂ : v.val / (128 : VarInt).val < 128 then
+      simp [h₂, UInt8.parser]
+
+      have : UInt8.ofNat (v.val / (128 : VarInt).val) < 128 := by
+        rw [UInt8.lt_iff_toNat_lt]
+        simp only [UInt8.toNat_ofNat', Nat.reducePow, UInt8.reduceToNat]
+        rw [Nat.mod_eq_of_lt]
+        · exact h₂
+        · apply Nat.lt_trans h₂; decide
+      simp [if_pos this]
+
+      have : v.val / (128 : VarInt).val % 128 * 128 + v.val % 128 < limit := by
+        grind
+      simp [dif_pos this]
+
+      apply Fin.eq_of_val_eq
+      simp
+      grind
+    else
+      simp [h₂, UInt8.parser]
+
+      have : ¬ UInt8.ofNat (v.val / (128 : VarInt).val) % 128 + 128 < 128 := by
+        simp [UInt8.lt_iff_toNat_lt]
+        grind
+      simp [if_neg this]
+
+      unfold VarInt.parser.loop
+      unfold VarInt.serialize
+      simp [Option.bind]
+
+      if h₃ : v.val / (128 : VarInt).val / (128 : VarInt).val < 128 then
+        simp [h₃, UInt8.parser]
+
+        have : UInt8.ofNat (v.val / (128 : VarInt).val / (128 : VarInt).val) < 128 := by
+          simp [UInt8.lt_iff_toNat_lt]
+          grind
+        simp [if_pos this]
+
+        have :
+          v.val / (128 : VarInt).val / (128 : VarInt).val % 128 * 16384 +
+          (v.val / (128 : VarInt).val % 128 * 128 + v.val % 128) < limit
+        := by grind
+        simp [dif_pos this]
+
+        apply Fin.eq_of_val_eq
+        simp
+        grind
+      else
+        simp [h₃, UInt8.parser]
+
+        have : ¬ UInt8.ofNat (v.val / (128 : VarInt).val / (128 : VarInt).val) % 128 + 128 < 128 := by
+          simp [UInt8.lt_iff_toNat_lt]
+          grind
+        simp [if_neg this]
+
+        unfold VarInt.parser.loop
+        unfold VarInt.serialize
+        simp [Option.bind]
+
+        if h₄ : v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val < 128 then
+          simp [h₄, UInt8.parser]
+
+          have :
+            UInt8.ofNat (v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val)
+              < 128 := by
+            simp [UInt8.lt_iff_toNat_lt]
+            grind
+          simp [if_pos this]
+
+          have :
+            v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val % 128 * 2097152 +
+              (v.val / (128 : VarInt).val / (128 : VarInt).val % 128 * 16384 +
+              (v.val / (128 : VarInt).val % 128 * 128 + v.val % 128)) < limit := by
+            grind
+          simp [dif_pos this]
+
+          ext
+          simp
+          grind
+        else
+          simp [h₄, UInt8.parser]
+
+          have :
+            ¬ UInt8.ofNat (v.val / (128 : VarInt).val / (128 : VarInt).val / (128 : VarInt).val)
+            % 128 + 128 < 128 := by
+            simp [UInt8.lt_iff_toNat_lt]
+            grind
+          simp [if_neg this]
+
+          unfold VarInt.parser.loop
+          unfold VarInt.serialize
+          simp
+
+          -- Since `v` is limited by `VarInt.limit`, h₄ must be false.
+          -- Grind solves the contradiction for us
+          grind
+
+-- theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
+--     VarInt.parser.run (v.serialize ++ rest) = some (v, rest) := by
+--   -- 1. Unfold the parser definition to expose the loop
+--   simp only [parser]
+
+--   -- 2. Define the inputs for the general lemma
+--   let inputs := v.val
+--   let mult := 1
+--   let acc := 0
+--   let fuel := 4
+
+--   -- 3. Formulate the Generalized Lemma
+--   -- We prove this by induction on 'inputs' (v.val) using the same well-founded
+--   -- relation as the 'serialize' function.
+--   have loop_spec (x : Nat) (m a f : Nat) :
+--       f ≥ (VarInt.mk x (sorry)).serialize.length → -- Enough fuel
+--       a + x * m < VarInt.limit →                   -- Result fits in limit
+--       VarInt.parser.loop m a f ((VarInt.mk x (sorry)).serialize ++ rest) =
+--       some (⟨a + x * m, sorry⟩, rest) := by
+
+--     induction x using VarInt.serialize.induct generalizing m a f rest with
+--     | case1 x h_small =>
+--       -- BASE CASE: x < 128 (1 byte)
+--       intro h_fuel h_limit
+--       -- Unfold loop (it consumes 1 fuel)
+--       unfold VarInt.parser.loop
+
+--       -- We need to show fuel is at least 1
+--       match f with
+--       | 0 =>
+--         -- Contradiction: serialize length is at least 1
+--         simp [VarInt.serialize, h_small] at h_fuel
+--         contradiction
+--       | f' + 1 =>
+--         -- Calculate the parser step
+--         simp only [VarInt.serialize, h_small, UInt8.parser, StateT.run, bind, Option.bind]
+
+--         -- Logic: b < 128 is true because x < 128
+--         have h_cond : (x.toUInt8 : Nat) < 128 := by
+--           simp [x.toUInt8_toNat, h_small]
+
+--         simp [h_cond]
+
+--         -- Prove the value equals the expected result
+--         -- Goal: (x % 128) * m + a = a + x * m
+--         rw [Nat.mod_eq_of_lt h_small]
+--         rw [Nat.add_comm, Nat.mul_comm]
+
+--         -- Prove the limit check passes
+--         simp [h_limit]
+
+--     | case2 x h_large ih =>
+--       -- RECURSIVE CASE: x >= 128
+--       intro h_fuel h_limit
+
+--       -- Unfold serialize for the head byte
+--       rw [VarInt.serialize]
+--       simp [h_large] -- Enter 'else' branch
+
+--       -- Unfold loop (consumes 1 fuel)
+--       unfold VarInt.parser.loop
+
+--       match f with
+--       | 0 =>
+--          -- Contradiction: serialize length > 1
+--          simp [VarInt.serialize, h_large] at h_fuel
+--          contradiction
+--       | f' + 1 =>
+--         simp only [UInt8.parser, StateT.run, bind, Option.bind]
+
+--         -- Logic: The byte is ((x % 128) + 128). This is >= 128.
+--         -- So the parser will take the 'else' branch (continue looping).
+--         have h_byte_val : ((x % 128 + 128).toUInt8.toNat) = x % 128 + 128 := by
+--           -- Proof that toUInt8 doesn't overflow (since mod 128 + 128 < 256)
+--           sorry -- (Standard Nat/UInt8 arithmetic)
+
+--         rw [h_byte_val]
+
+--         -- Check loop condition: b < 128 is false
+--         have h_not_small : ¬ (x % 128 + 128 < 128) := by simp_arith
+--         simp [h_not_small]
+
+--         -- APPLY INDUCTION HYPOTHESIS
+--         -- We recurse with:
+--         --   New x:    x / 128
+--         --   New mult: m * 128
+--         --   New acc:  (x % 128) * m + a
+--         apply ih
+--         · -- Proof: Fuel is sufficient (fuel - 1 >= length - 1)
+--           simp [VarInt.serialize, h_large] at h_fuel
+--           exact Nat.le_of_succ_le_succ h_fuel
+--         · -- Proof: The accumulated result is the same!
+--           -- (a + (x % 128)*m) + (x / 128) * (m * 128) = a + x * m
+--           rw [varint_algebra]
+--           exact h_limit
+
+--   -- 4. Apply the lemma to the initial state
+--   -- x = v.val, mult = 1, acc = 0, fuel = 4
+--   exact loop_spec v.val 1 0 4 (sorry) (sorry)
 
 /--
   Executable checker: Returns true if 'n' survives the roundtrip.
