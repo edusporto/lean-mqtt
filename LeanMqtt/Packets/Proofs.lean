@@ -1,4 +1,4 @@
-import LeanMqtt.Packets.Packet.Basic
+import LeanMqtt.Packets.Basic
 import LeanMqtt.Packets.FixedHeader.Proofs
 import LeanMqtt.Packets.VarHeader.Proofs
 
