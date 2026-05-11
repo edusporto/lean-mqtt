@@ -1,4 +1,4 @@
-import Batteries.Data.ByteArray
+-- import Batteries.Data.ByteArray
 
 /--
   Available at

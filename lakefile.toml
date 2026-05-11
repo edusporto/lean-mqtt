@@ -15,4 +15,4 @@ root = "Main"
 [[require]]
 name = "batteries"
 scope = "leanprover-community"
-rev = "24241822ef9d3e7f6a3bcc53ad136e12663db8f3"
+rev = "495c008c3e3f4fb4256ff5582ddb3abf3198026f"

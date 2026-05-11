@@ -10,7 +10,7 @@ def main : IO Unit := do
   let stdin ← IO.getStdin
 
   let x ← stdin.getLine
-  let x := match x.trim.toNat? with
+  let x := match x.trimAscii.toNat? with
   | none => panic! "not a number"
   | some n => n
 

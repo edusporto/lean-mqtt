@@ -54,9 +54,9 @@ theorem UInt32.roundtrip (n : UInt32) (rest : List UInt8) :
 theorem String.serialize_len (s : String) :
   s.serialize.length = s.utf8ByteSize := by
   rw [String.utf8ByteSize_ofByteArray]
-  simp only [String.serialize, String.toUTF8_eq_bytes]
+  simp only [String.serialize, String.toUTF8_eq_toByteArray]
   rw [Helpers.bytearray_tolist_eq_data_tolist, ByteArray.size]
-  exact @Array.size_eq_length_toList UInt8 s.bytes.data
+  exact @Array.size_eq_length_toList UInt8 s.toByteArray.data
 
 theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
   (String.parser len).run inp = some (s, rest) → s.utf8ByteSize = len := by
@@ -79,7 +79,7 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
 theorem String.roundtrip (s : String) (rest : List UInt8) :
   (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
   simp only [String.serialize, String.parser]
-  simp only [String.toUTF8_eq_bytes, StateT.run_bind, Option.bind_eq_bind, Option.bind]
+  simp only [String.toUTF8_eq_toByteArray, StateT.run_bind, Option.bind_eq_bind, Option.bind]
   rw [roundtrip_bytes]
   simp only
   split
