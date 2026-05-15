@@ -30,26 +30,19 @@ def parsePropsLoop (input : List UInt8) :
   else
     match h_parse : Property.parser.run input with
     | some (p, rest) =>
-      -- `h_progress` makes sure the function terminates
-      -- TODO: we might be able to remove the check
-      -- if rest.length < input.length then
-        match parsePropsLoop rest with
-        | some ⟨tail, h_tail_len⟩ =>
-          let h_len_ps : input.length = Properties.rawByteSize (p :: tail) := by
-            have h_consumed : input.length = p.byteSize + rest.length
-              := Property.parser_len_consumed input p rest h_parse
-            rw [h_tail_len] at h_consumed
-            exact h_consumed
+      match parsePropsLoop rest with
+      | some ⟨tail, h_tail_len⟩ =>
+        let h_len_ps : input.length = Properties.rawByteSize (p :: tail) := by
+          have h_consumed : input.length = p.byteSize + rest.length
+            := Property.parser_len_consumed input p rest h_parse
+          rw [h_tail_len] at h_consumed
+          exact h_consumed
 
-          some ⟨(p :: tail), h_len_ps⟩
-        | none => none
-      -- else
-        -- none
+        some ⟨(p :: tail), h_len_ps⟩
+      | none => none
     | none => none
 termination_by input.length
 decreasing_by
-  -- We can prove termination using `Property.byteSize_pos p`.
-  -- Since it is still using `sorry`, we keep the older code commented for now.
   have h_consumed := Property.parser_len_consumed input p rest h_parse
   have h_pos := Property.byteSize_pos p
   omega

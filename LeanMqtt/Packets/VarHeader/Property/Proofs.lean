@@ -39,6 +39,8 @@ theorem Property.parser_len_consumed (input : List UInt8) (p : Property) (rest :
     _            = p.byteSize + rest.length := rfl
 
 theorem Property.byteSize_pos (p : Property) : 0 < p.byteSize := by
-  -- Since p.serialize = p.id.serialize ++ ..., it must be at least
-  -- the length of the serialized VarInt, which is strictly > 0.
-  sorry
+  -- We always encode the id as a `VarInt`, so the byte size of a
+  -- property must always be over 0
+  simp [Property.byteSize, Property.serialize]
+  unfold VarInt.serialize
+  grind
