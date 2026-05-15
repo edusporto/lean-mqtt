@@ -1,5 +1,5 @@
 import LeanMqtt.Core.Parser.Basic
-import LeanMqtt.Core.WithLength
+import LeanMqtt.Core.WithByteSize
 
 instance : Coe UInt16 Nat where
   coe := UInt16.toNat
@@ -85,37 +85,102 @@ decreasing_by
   · exact Nat.lt_of_lt_of_le (by decide) h
   · decide
 
+-- def VarInt.parser : Parser VarInt := do
+--   -- We use an accumulator loop to handle the Little-Endian decoding
+--   -- mult: The current place value (1, 128, 128^2, ...)
+--   -- acc:  The accumulated value so far
+--   -- fuel: Max bytes to read (4)
+--   let rec loop (mult : Nat) (acc : Nat) (fuel : Nat) : Parser VarInt := do
+--     match fuel with
+--     | 0 => none -- Exceeded 4 bytes (Malformed Packet)
+--     | fuel' + 1 =>
+--       let b ← UInt8.parser
+--       let val := (b % 128).toNat * mult + acc
+
+--       if b < 128 then
+--         -- Continuation bit is 0: We are done.
+
+--         -- The following check is always true. We do it to get a proof that
+--         -- the value fits on a `VarInt`.
+--         -- A different implementation without this check, along with a
+--         -- performance comparison, is available at
+--         -- https://gist.github.com/edusporto/2e995ccda37ab0949de03ab30da3ef49.
+--         -- The performance improvement was too small to justify the added
+--         -- complexity.
+--         if h : val < VarInt.limit then
+--           some ⟨val, h⟩
+--         else
+--           none -- Value exceeds protocol limit
+--       else
+--         -- Continuation bit is 1: Keep reading.
+--         loop (mult * 128) val fuel'
+--   loop 1 0 4
+
+-- def VarInt.parser : Parser VarInt := do
+--   -- We use an accumulator loop to handle the little-endian decoding
+--   -- mult: The current place value (1, 128, 128^2, ...)
+--   -- acc:  The accumulated value so far
+--   -- fuel: Max bytes to read (4)
+--   let mul_start := 1
+--   let acc_start := 0
+--   let max_bytes := 4
+--   let rec loop (mult : Nat) (acc : Nat) (fuel : Nat) : Parser VarInt := do
+--     match fuel with
+--     | 0 => none -- Exceeded 4 bytes (Malformed Packet)
+--     | fuel' + 1 =>
+--       let b ← UInt8.parser
+
+--       -- The spec forbids
+--       if b = 0 ∧ fuel' < (max_bytes - 1) then
+--         none
+--       else
+--         let val := (b % 128).toNat * mult + acc
+--         if b < 128 then
+--           if h : val < VarInt.limit then
+--             some ⟨val, h⟩
+--           else
+--             none
+--         else
+--           loop (mult * 128) val fuel'
+--   loop mul_start acc_start max_bytes
+
 def VarInt.parser : Parser VarInt := do
-  -- We use an accumulator loop to handle the Little-Endian decoding
+  -- We use an accumulator loop to handle the little-endian decoding
   -- mult: The current place value (1, 128, 128^2, ...)
   -- acc:  The accumulated value so far
   -- fuel: Max bytes to read (4)
+  let mul_start := 1
+  let acc_start := 0
+  let max_bytes := 4
   let rec loop (mult : Nat) (acc : Nat) (fuel : Nat) : Parser VarInt := do
     match fuel with
-    | 0 => none -- Exceeded 4 bytes (Malformed Packet)
+    | 0 => failure -- Exceeded 4 bytes
     | fuel' + 1 =>
       let b ← UInt8.parser
-      let val := (b % 128).toNat * mult + acc
 
-      if b < 128 then
-        -- Continuation bit is 0: We are done.
+      -- The spec forbids non-minimal encodings (MQTT-1.5.5-1)
+      if b = 0 ∧ fuel' < (max_bytes - 1) then
+        failure
 
-        -- The following check is always true. We do it to get a proof that
-        -- the value fits on a `VarInt`.
-        -- A different implementation without this check, along with a
-        -- performance comparison, is available at
-        -- https://gist.github.com/edusporto/2e995ccda37ab0949de03ab30da3ef49.
-        -- The performance improvement was too small to justify the added
-        -- complexity.
-        if h : val < VarInt.limit then
-          some ⟨val, h⟩
-        else
-          none -- Value exceeds protocol limit
+      let val := (b.toNat % 128) * mult + acc
+
+      -- If continuation bit is 1, keep looping
+      if ¬(b < 128) then
+        return ← loop (mult * 128) val fuel'
+
+      -- The following check is always true. We do it to get a proof that
+      -- the value fits on a `VarInt`.
+      -- A different implementation without this check, along with a
+      -- performance comparison, is available at
+      -- https://gist.github.com/edusporto/2e995ccda37ab0949de03ab30da3ef49.
+      -- The performance improvement was too small to justify the added
+      -- complexity.
+      if h_lim : val < VarInt.limit then
+        return ⟨val, h_lim⟩
       else
-        -- Continuation bit is 1: Keep reading.
-        loop (mult * 128) val fuel'
+        failure
 
-  loop 1 0 4
+  loop mul_start acc_start max_bytes
 
 /- ========================= String ========================= -/
 
@@ -146,7 +211,7 @@ def String.parserWithProof (n : Nat) : Parser { s : String // s.utf8ByteSize = n
 
 /- ========================= Str ========================= -/
 
-abbrev Str := WithLength String UInt16
+abbrev Str := WithByteSize String UInt16
 
 def Str.serialize (s : Str) : List UInt8 :=
   UInt16.serialize (s.len) ++ String.serialize s.val
@@ -155,8 +220,8 @@ def Str.parser : Parser Str := do
   let len ← UInt16.parser
   let ⟨str, h⟩ ← String.parserWithProof len.toNat
 
-  have h_len : Coe.coe len = GetLength.length str := by
-    simp [Coe.coe, GetLength.length]; exact h.symm
+  have h_len : Coe.coe len = GetByteSize.byteSize str := by
+    simp [Coe.coe, GetByteSize.byteSize]; exact h.symm
 
   return {val := str, len := ⟨len, h_len⟩ }
 
@@ -174,7 +239,7 @@ def StrPair.parser : Parser StrPair := do
 
 /- ========================= BinaryData ========================= -/
 
-abbrev BinaryData := WithLength (Array UInt8) UInt16
+abbrev BinaryData := WithByteSize (Array UInt8) UInt16
 
 def BinaryData.serialize (b : BinaryData) :=
   UInt16.serialize (b.len) ++ b.val.toList
@@ -184,8 +249,8 @@ def BinaryData.parser : Parser BinaryData := do
   let ⟨l, h⟩ ← bytesParserWithProof len.toNat
   let b := l.toArray
 
-  have h_len : Coe.coe len = GetLength.length b := by
-    simp [Coe.coe, GetLength.length]; apply h.symm
+  have h_len : Coe.coe len = GetByteSize.byteSize b := by
+    simp [Coe.coe, GetByteSize.byteSize]; apply h.symm
 
   return {val := b, len := ⟨len, h_len⟩ }
 

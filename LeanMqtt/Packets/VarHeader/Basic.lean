@@ -1,6 +1,6 @@
 import LeanMqtt.Primitives.Basic
 import LeanMqtt.Packets.FixedHeader.Basic
-import LeanMqtt.Packets.VarHeader.Properties
+import LeanMqtt.Packets.VarHeader.Properties.Basic
 import LeanMqtt.Packets.VarHeader.Variations
 
 namespace Mqtt

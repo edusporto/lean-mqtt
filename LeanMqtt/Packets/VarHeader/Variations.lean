@@ -1,5 +1,5 @@
 import LeanMqtt.Primitives.Basic
-import LeanMqtt.Packets.VarHeader.Properties
+import LeanMqtt.Packets.VarHeader.Properties.Basic
 
 namespace Mqtt
 open Mqtt

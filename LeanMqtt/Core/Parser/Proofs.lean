@@ -42,8 +42,8 @@ theorem roundtrip_bytes_with_proof (l : List UInt8) (rest : List UInt8) :
 
 theorem bytesParserWithProof_eq_parser_success (n : Nat)
   (l : List UInt8) (inp rest : List UInt8) :
-  (bytesParser n).run inp = some (l, rest) →
-  ∃ h, (bytesParserWithProof n).run inp = some (⟨l, h⟩, rest) := by
+    (bytesParser n).run inp = some (l, rest) →
+    ∃ h, (bytesParserWithProof n).run inp = some (⟨l, h⟩, rest) := by
   intro h_simple
   have h_len_parser := bytesParser_len _ _ _ _ h_simple
   simp only [bytesParser, bytesParserWithProof] at *
