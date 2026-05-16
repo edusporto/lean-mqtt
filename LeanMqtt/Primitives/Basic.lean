@@ -31,6 +31,9 @@ def UInt16.parser : Parser UInt16 := do
   let bytes ← bytesParser 2
   match bytes with
   | [b1, b2] => return (b1.toUInt16 <<< 8) ||| b2.toUInt16
+  -- Note: the empty case is impossible.
+  -- We could change this function so we wouldn't have to
+  -- include it. However, this would make proofs harder.
   | _ => none
 
 /- ========================= UInt32 ========================= -/

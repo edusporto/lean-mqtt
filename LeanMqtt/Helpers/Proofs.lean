@@ -113,3 +113,25 @@ theorem Helpers.bytearray_list_roundtrip (arr : ByteArray) :
   -- Conclude arrays are equal because their lists are equal
   apply Array.ext'
   exact h_lists
+
+theorem Helpers.list_bytearray_roundtrip (l : List UInt8) :
+  l.toByteArray.toList = l := by
+  rw [Helpers.bytearray_tolist_eq_data_tolist]
+
+  have loop_append (r : ByteArray) :
+      (List.toByteArray.loop l r).data.toList = r.data.toList ++ l := by
+    induction l generalizing r with
+    | nil =>
+      simp only [List.toByteArray.loop, List.append_nil]
+    | cons b tail ih =>
+      simp only [List.toByteArray.loop]
+      rw [ih (r.push b)]
+      simp only [
+        ByteArray.data_push, Array.toList_push,
+        List.append_assoc, List.cons_append, List.nil_append
+      ]
+
+  rw [List.toByteArray]
+  specialize loop_append ByteArray.empty
+  simp at loop_append
+  exact loop_append
