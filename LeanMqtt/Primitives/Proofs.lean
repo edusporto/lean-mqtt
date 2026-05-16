@@ -11,27 +11,15 @@ open Mqtt
 
 theorem UInt8.roundtrip (b : UInt8) (rest : List UInt8) :
   UInt8.parser.run (b.serialize ++ rest) = some (b, rest) := by
-  simp only [
-    UInt8.parser, UInt8.serialize, StateT.run_bind, StateT.run_get,
-    Option.pure_def, Option.bind_eq_bind, Option.bind_some
-  ]
-  split
-  · contradiction
-  · next b' rest' h =>
-    simp only [
-      List.cons_append, List.nil_append, List.cons.injEq, StateT.run_bind,
-      StateT.run_set, Option.pure_def, StateT.run_monadLift, monadLift_self,
-      Option.bind_eq_bind, Option.bind_some, Option.some.injEq, Prod.mk.injEq
-    ] at *
-    exact ⟨h.left.symm, h.right.symm⟩
+  simp [UInt8.parser, UInt8.serialize]
 
 theorem UInt8.parser_len (n : UInt8) :
   n.serialize.length = 1 := by
-    rfl
+  rfl
 
 theorem UInt16.parser_len (n : UInt16) :
   n.serialize.length = 2 := by
-  simp only [UInt16.serialize, List.length_cons, List.length_nil, Nat.zero_add, Nat.reduceAdd]
+  rfl-- simp [UInt16.serialize]
 
 theorem UInt16.roundtrip (n : UInt16) (rest : List UInt8) :
   UInt16.parser.run (n.serialize ++ rest) = some (n, rest) := by
@@ -43,30 +31,28 @@ theorem UInt16.roundtrip (n : UInt16) (rest : List UInt8) :
 
 theorem UInt32.parser_len (n : UInt32) :
   n.serialize.length = 4 := by
-  simp only [UInt32.serialize, List.length_cons, List.length_nil, Nat.zero_add, Nat.reduceAdd]
+  rfl
 
 theorem UInt32.roundtrip (n : UInt32) (rest : List UInt8) :
   UInt32.parser.run (n.serialize ++ rest) = some (n, rest) := by
-  simp only [UInt32.parser, StateT.run_bind, Option.bind_eq_bind]
+  simp [UInt32.parser]
   rw [←UInt32.parser_len n]
   rw [roundtrip_bytes _ _]
-  simp only [
-    UInt32.serialize, Option.bind_some, UInt32.toUInt32_toUInt8, StateT.run_pure,
-    Option.pure_def, Option.some.injEq, Prod.mk.injEq, and_true
-  ]
+  simp [UInt32.serialize]
   bv_decide
 
 theorem String.serialize_len (s : String) :
   s.serialize.length = s.utf8ByteSize := by
   rw [String.utf8ByteSize_ofByteArray]
-  simp only [String.serialize, String.toUTF8_eq_toByteArray]
-  rw [Helpers.bytearray_tolist_eq_data_tolist, ByteArray.size]
+  simp [String.serialize, String.toUTF8_eq_toByteArray]
+  rw [Helpers.bytearray_tolist_eq_data_tolist]
+  unfold String.utf8ByteSize
   exact @Array.size_eq_length_toList UInt8 s.toByteArray.data
 
 theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
   (String.parser len).run inp = some (s, rest) → s.utf8ByteSize = len := by
-  simp only [String.parser]
-  simp only [StateT.run_bind, Option.bind_eq_bind, Option.bind]
+  simp [String.parser]
+  simp [Option.bind]
   intro h
   split at h
   · contradiction
@@ -84,9 +70,9 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
 theorem String.roundtrip (s : String) (rest : List UInt8) :
   (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
   simp only [String.serialize, String.parser]
-  simp only [String.toUTF8_eq_toByteArray, StateT.run_bind, Option.bind_eq_bind, Option.bind]
+  simp [String.toUTF8_eq_toByteArray, Option.bind]
   rw [roundtrip_bytes]
-  simp only
+  simp
   split
   · next h =>
     simp [String.fromUTF8, Helpers.bytearray_list_roundtrip]
@@ -96,31 +82,27 @@ theorem String.roundtrip (s : String) (rest : List UInt8) :
 
 theorem String.roundtrip_proof (s : String) (rest : List UInt8) :
   (String.parserWithProof s.serialize.length).run (s.serialize ++ rest) = some (⟨s, s.serialize_len.symm⟩, rest) := by
-  simp only [String.parserWithProof]
-  simp only [StateT.run_bind, Option.bind_eq_bind, Option.bind]
+  simp [String.parserWithProof]
+  simp [Option.bind]
   split
-  { next x val h_eq =>
+  · next x val h_eq =>
     rw [roundtrip_bytes_with_proof _ _] at h_eq
     contradiction
-  }
-  { next val h_eq =>
+  · next val h_eq =>
     rw [roundtrip_bytes_with_proof _ _] at h_eq
     simp only
     injection h_eq with h_eq
     split
-    { next h_utf8 =>
-      simp only [StateT.run_pure, Option.pure_def, Option.some.injEq, Prod.mk.injEq, Subtype.mk.injEq]
+    · next h_utf8 =>
+      simp
       subst h_eq
       simp only [and_true]
       congr
       apply Helpers.bytearray_list_roundtrip
-    }
-    { next h_wrong =>
+    · next h_wrong =>
       rw [←h_eq] at h_wrong
       simp [String.serialize, Helpers.bytearray_list_roundtrip] at h_wrong
       exact absurd s.isValidUTF8 h_wrong
-    }
-  }
 
 theorem String.parserWithProof_eq_parser_success (n : Nat) (inp : List UInt8)
   (s : String) (rest : List UInt8) :
