@@ -327,44 +327,44 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
           -- Since `v` is limited by `VarInt.limit`, h₄ must be false.
           grind
 
-example (b : UInt8) : b.toNat < 256 :=
-  b.toBitVec.isLt
-
--- We'll need the theorems below to help `omega` in the `VarInt.parser_reconstruct`
--- proof.
-private theorem UInt8.toNat_pos {b : UInt8} (h : ¬b = 0) : 0 < b.toNat := by
-  apply Nat.pos_of_ne_zero
-  intro h_zero
-  apply h
-  cases b
-  rename_i bv
-  have h_bv_eq_zero : bv = 0 := by
-    apply BitVec.eq_of_toNat_eq
-    exact h_zero
-  rw [h_bv_eq_zero]
-  rfl
-
-private theorem UInt8.toNat_lt_256 (b : UInt8) : b.toNat < 256 :=
-  b.toBitVec.isLt
-
 theorem VarInt.parser_reconstruct
     (input : List UInt8) (v : VarInt) (rest : List UInt8) :
     VarInt.parser.run input = some (v, rest) → input = v.serialize ++ rest := by
 
   intro h_parse
-  have ⟨v', v_h⟩ := v
-  have h_cast : (↑(128 : VarInt) : Nat) = 128 := rfl
+  obtain ⟨v', v_h⟩ := v
 
-  simp [VarInt.parser] at h_parse
+  -- Initialize parser evaluation
+  simp only [VarInt.parser] at h_parse
   unfold VarInt.parser.loop at h_parse
   simp at h_parse
+
   cases input with
   | nil => contradiction
   | cons b1 rest1 =>
     simp [UInt8.parser] at h_parse
     split at h_parse
-    · next h_128_leq_b1 =>
-      have h_128_leq_b1_nat : 128 ≤ b1.toNat := h_128_leq_b1
+    rotate_left -- Handle 1-byte terminal case first
+    · next h_b1_stops =>
+      split at h_parse
+      · next h_limit =>
+        -- ==========================================
+        -- 1-Byte Success Path
+        -- ==========================================
+        simp at h_parse
+        obtain ⟨h_val, h_rest⟩ := h_parse
+        rw [← h_rest]
+
+        unfold VarInt.serialize
+
+        have h1 : v' < 128 := by omega
+        simp [if_pos h1]
+
+        natify_uint8; simp at *
+        omega
+      · contradiction
+
+    · next h_b1_continues =>
       cases rest1 with
       | nil => contradiction
       | cons b2 rest2 =>
@@ -372,11 +372,32 @@ theorem VarInt.parser_reconstruct
         simp [UInt8.parser] at h_parse
         split at h_parse
         · contradiction
-        · next h_b2_neq_0 =>
-          have h_b2_neq_0_nat : 0 < b2.toNat := UInt8.toNat_pos h_b2_neq_0
+        · next h_b2_valid =>
           split at h_parse
-          · next h_b2_leq_128 =>
-            have h_b2_leq_128_nat : 128 ≤ b2.toNat := h_b2_leq_128
+          rotate_left -- Handle 2-byte terminal case first
+          · next h_b2_stops =>
+            split at h_parse
+            · next h_limit =>
+              -- ==========================================
+              -- 2-Byte Success Path
+              -- ==========================================
+              simp at h_parse
+              obtain ⟨h_val, h_rest⟩ := h_parse
+              rw [← h_rest]
+
+              unfold VarInt.serialize
+              unfold VarInt.serialize
+              natify_uint8; simp at *; crush_lits; simp at *
+
+              have h1 : ¬v' < 128 := by omega
+              have h2 : v' / 128 < 128 := by omega
+              simp [if_neg h1, if_pos h2]
+
+              natify_uint8; simp at *
+              exact ⟨by omega, by omega⟩
+            · contradiction
+
+          · next h_b2_continues =>
             cases rest2 with
             | nil => contradiction
             | cons b3 rest3 =>
@@ -384,11 +405,34 @@ theorem VarInt.parser_reconstruct
               simp [UInt8.parser] at h_parse
               split at h_parse
               · contradiction
-              · next h_b3_neq_0 =>
-                have h_b3_neq_0_nat : 0 < b3.toNat := UInt8.toNat_pos h_b3_neq_0
+              · next h_b3_valid =>
                 split at h_parse
-                · next h_128_leq_b3 =>
-                  have h_128_leq_b3_nat : 128 ≤ b3.toNat := h_128_leq_b3
+                rotate_left -- Handle 3-byte terminal case first
+                · next h_b3_stops =>
+                  split at h_parse
+                  · next h_limit =>
+                    -- ==========================================
+                    -- 3-Byte Success Path
+                    -- ==========================================
+                    simp at h_parse
+                    obtain ⟨h_val, h_rest⟩ := h_parse
+                    rw [← h_rest]
+
+                    unfold VarInt.serialize
+                    unfold VarInt.serialize
+                    unfold VarInt.serialize
+                    natify_uint8; simp at *; crush_lits; simp at *
+
+                    have h1 : ¬v' < 128 := by omega
+                    have h2 : ¬v' / 128 < 128 := by omega
+                    have h3 : v' / 128 / 128 < 128 := by omega
+                    simp [if_neg h1, if_neg h2, if_pos h3]
+
+                    natify_uint8; simp at *
+                    exact ⟨by omega, by omega, by omega⟩
+                  · contradiction
+
+                · next h_b3_continues =>
                   cases rest3 with
                   | nil => contradiction
                   | cons b4 rest4 =>
@@ -396,134 +440,42 @@ theorem VarInt.parser_reconstruct
                     simp [UInt8.parser] at h_parse
                     split at h_parse
                     · contradiction
-                    · next h_b4_neq_0 =>
-                      have h_b4_neq_0_nat : 0 < b4.toNat := UInt8.toNat_pos h_b4_neq_0
+                    · next h_b4_valid =>
                       split at h_parse
-                      · next h_128_leq_b4 =>
-                        unfold parser.loop at h_parse
-                        contradiction
-                      · next h_128_gt_b4 =>
-                        have h_128_gt_b4_nat : ¬128 ≤ b4.toNat := h_128_gt_b4
+                      rotate_left -- Handle 4-byte terminal case first
+                      · next h_b4_stops =>
                         split at h_parse
-                        rotate_left
-                        · contradiction
                         · next h_limit =>
+                          -- ==========================================
+                          -- 4-Byte Success Path
+                          -- ==========================================
                           simp at h_parse
                           obtain ⟨h_val, h_rest⟩ := h_parse
                           rw [← h_rest]
 
                           unfold VarInt.serialize
-                          have : ¬v' < 128 := by omega
-                          simp [dif_neg this]
-
-                          unfold VarInt.serialize; simp
-                          rw [h_cast]
-                          have : ¬v' / 128 < 128 := by omega
-                          simp [if_neg this]
-
                           unfold VarInt.serialize
-                          simp
-                          rw [h_cast]
-                          have : ¬v' / 128 / 128 < 128 := by omega
-                          simp [if_neg this]
-
                           unfold VarInt.serialize
-                          simp
-                          rw [h_cast]
-                          have : v' / 128 / 128 / 128 < 128 := by omega
-                          simp [if_pos this]
+                          unfold VarInt.serialize
+                          natify_uint8; simp at *; crush_lits; simp at *
 
-                          refine ⟨?_, ?_, ?_, ?_⟩
-                          · apply UInt8.toNat.inj; simp
-                            have h_b1_limit := UInt8.toNat_lt_256 b1
-                            omega
-                          · apply UInt8.toNat.inj; simp
-                            have h_b2_limit := UInt8.toNat_lt_256 b2
-                            omega
-                          · apply UInt8.toNat.inj; simp
-                            have h_b2_limit := UInt8.toNat_lt_256 b3
-                            omega
-                          · apply UInt8.toNat.inj; simp
-                            have h_b2_limit := UInt8.toNat_lt_256 b4
-                            omega
-                · next h_b3_gt_128 =>
-                  have h_b3_gt_128 : ¬128 ≤ b3.toNat := h_b3_gt_128
-                  split at h_parse
-                  · next h_limit =>
-                    simp at h_parse
-                    obtain ⟨h_val, h_rest⟩ := h_parse
-                    rw [← h_rest]
+                          have h1 : ¬v' < 128 := by omega
+                          have h2 : ¬v' / 128 < 128 := by omega
+                          have h3 : ¬v' / 128 / 128 < 128 := by omega
+                          have h4 : v' / 128 / 128 / 128 < 128 := by omega
+                          simp [if_neg h1, if_neg h2, if_neg h3, if_pos h4]
 
-                    unfold VarInt.serialize; simp
-                    have : ¬v' < 128 := by omega
-                    simp [if_neg this]
+                          natify_uint8; simp at *
+                          exact ⟨by omega, by omega, by omega, by omega⟩
+                        · contradiction
 
-                    unfold VarInt.serialize; simp
-                    rw [h_cast]
-                    have : ¬v' / 128 < 128 := by omega
-                    simp [if_neg this]
-
-                    unfold VarInt.serialize; simp
-                    rw [h_cast]
-                    have : v' / 128 / 128 < 128 := by omega
-                    simp [if_pos this]
-
-                    refine ⟨?_, ?_, ?_⟩
-                    · apply UInt8.toNat.inj; simp
-                      have h_b1_limit := UInt8.toNat_lt_256 b1
-                      omega
-                    · apply UInt8.toNat.inj; simp
-                      have h_b2_limit := UInt8.toNat_lt_256 b2
-                      omega
-                    · apply UInt8.toNat.inj; simp
-                      have h_b3_limit := UInt8.toNat_lt_256 b3
-                      omega
-                  · contradiction
-          · next h_128_le_b2 =>
-            have h_128_le_b2_nat : ¬128 ≤ b2.toNat := h_128_le_b2
-            split at h_parse
-            · next h_limit =>
-              simp at h_parse
-              obtain ⟨h_val, h_rest⟩ := h_parse
-              rw [← h_rest]
-
-              unfold VarInt.serialize; simp
-              have : ¬v' < 128 := by omega
-              simp [if_neg this]
-
-              unfold VarInt.serialize; simp
-              rw [h_cast]
-              have : v' / 128 < 128 := by omega
-              simp [if_pos this]
-
-              refine ⟨?_, ?_⟩
-              · apply UInt8.toNat.inj; simp
-                have h_b1_limit := UInt8.toNat_lt_256 b1
-                omega
-              · apply UInt8.toNat.inj; simp
-                have h_b2_limit := UInt8.toNat_lt_256 b2
-                omega
-            · contradiction
-    · next h_128_gt_b1 =>
-      have h_128_gt_b1_nat : ¬128 ≤ b1.toNat := h_128_gt_b1
-      split at h_parse
-      · next h_limit =>
-        simp at h_parse
-        obtain ⟨h_val, h_rest⟩ := h_parse
-        rw [← h_rest]
-
-        unfold VarInt.serialize; simp
-        have : v' < 128 := by omega
-        simp [if_pos this]
-
-        apply UInt8.toNat.inj; simp
-        have h_b1_limit := UInt8.toNat_lt_256 b1
-        omega
-      · contradiction
+                      · next h_b4_continues =>
+                        -- Exceeded 4-byte fuel
+                        unfold parser.loop at h_parse
+                        contradiction
 
 /--
   Executable checker: Returns true if 'n' survives the roundtrip.
-  Note: We use strict equality checks.
 -/
 def checksOut (n : VarInt) : Bool :=
   let bytes := VarInt.serialize n
