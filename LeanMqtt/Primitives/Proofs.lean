@@ -1,10 +1,10 @@
 import Std.Tactic.BVDecide
 import Helpers.Proofs
+import Helpers.NatifyUInt8
+import Helpers.CrushLits
 
 import LeanMqtt.Core.Parser.Proofs
 import LeanMqtt.Primitives.Basic
-import Helpers.NatifyUInt8
-import Helpers.CrushLits
 
 namespace Mqtt
 open Mqtt
