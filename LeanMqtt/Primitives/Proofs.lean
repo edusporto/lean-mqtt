@@ -473,25 +473,3 @@ theorem VarInt.parser_reconstruct
                         -- Exceeded 4-byte fuel
                         unfold parser.loop at h_parse
                         contradiction
-
-/--
-  Executable checker: Returns true if 'n' survives the roundtrip.
--/
-def checksOut (n : VarInt) : Bool :=
-  let bytes := VarInt.serialize n
-  match VarInt.parser.run bytes with
-  | some (v, []) => v.val == n
-  | _ => false
-
-/-- Checks 'checksOut' for all numbers from 'start' up to 'limit' -/
-def checkRange (start limit : Nat) : Bool :=
-  if start >= limit then
-    true
-  else if h : ¬(start < VarInt.limit) then
-    false
-  else if checksOut ⟨start, Decidable.of_not_not h⟩ then
-    checkRange (start + 1) limit
-  else
-    false
-
-end Mqtt
