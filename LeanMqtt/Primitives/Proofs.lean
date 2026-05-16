@@ -3,6 +3,8 @@ import Helpers.Proofs
 
 import LeanMqtt.Core.Parser.Proofs
 import LeanMqtt.Primitives.Basic
+import Helpers.NatifyUInt8
+import Helpers.NatifyFin
 
 namespace Mqtt
 open Mqtt
@@ -215,53 +217,103 @@ theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
 
   rw [h_dep]
 
+@[simp] theorem varint_coe_eq_val (v : VarInt) : (↑v : Nat) = v.val := rfl
+
+-- 1. Catches literals that Lean secretly inferred as strictly `Fin n`
+@[simp] theorem fin_coe_literal {n : Nat} [NeZero n] (x : Nat) :
+  (↑(OfNat.ofNat x : Fin n) : Nat) = x % n := rfl
+
+@[simp] theorem fin_val_literal {n : Nat} [NeZero n] (x : Nat) :
+  (OfNat.ofNat x : Fin n).val = x % n := rfl
+
+-- 2. Catches literals that actually use your custom VarInt Coe
+@[simp] theorem varint_coe_literal (x : Nat) :
+  (↑(OfNat.ofNat x : VarInt) : Nat) = x % VarInt.limit := rfl
+
 theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
     VarInt.parser.run (v.serialize ++ rest) = some (v, rest) := by
-  sorry
-  /-
+
+  have ⟨v', h_v_limit⟩ := v
   simp [VarInt.parser]
   unfold VarInt.parser.loop
   unfold VarInt.serialize
-  simp [Option.bind]
+  simp [Option.bind, UInt8.parser]
 
-  if h₁ : v.val < 128 then
-    simp [h₁, UInt8.parser]
+  if h₁ : v' < 128 then
+    simp [h₁]
 
-    have : UInt8.ofNat v.val < 128 := by
-      rw [UInt8.lt_iff_toNat_lt]
+    have : ¬128 ≤ UInt8.ofNat v' := by
+      rw [UInt8.le_iff_toNat_le]
       simp only [UInt8.toNat_ofNat', Nat.reducePow, UInt8.reduceToNat]
       rw [Nat.mod_eq_of_lt]
-      · exact h₁
+      · omega
       · apply Nat.lt_trans h₁; decide
-    simp [if_pos this]
+    simp [if_neg this]
 
-    have : v.val % 128 < limit := by
+    have : v' % 128 < limit := by
       rw [Nat.mod_eq_of_lt]
-      · simp
+      · exact h_v_limit
       · apply h₁
     simp [dif_pos this]
-
-    apply Fin.eq_of_val_eq -- same as doing `ext`
-    simp only [Nat.mod_succ_eq_iff_lt, Nat.succ_eq_add_one, Nat.reduceAdd]
     exact h₁
   else
-    simp [h₁, UInt8.parser]
+    simp [h₁]
 
-    have : ¬ UInt8.ofNat v.val % 128 + 128 < 128 := by
-      rw [UInt8.lt_iff_toNat_lt]
-      simp [UInt8.toNat_ofNat', Nat.reducePow, UInt8.reduceToNat]
+    have : 128 ≤ UInt8.ofNat v' % 128 + 128 := by
+      rw [UInt8.le_iff_toNat_le]
+      simp
       rw [Nat.mod_eq_of_lt]
       · simp
-      · have h_mod : ↑v % 128 < 128 := Nat.mod_lt ↑v (by decide)
+      · have h_mod : v' % 128 < 128 := Nat.mod_lt v' (by decide)
         exact Nat.add_lt_add_right h_mod 128
-    simp [if_neg this]
+    simp [if_pos this]
 
     unfold VarInt.parser.loop
     unfold VarInt.serialize
-    simp [Option.bind]
+    simp [UInt8.parser]
 
-    if h₂ : v.val / (128 : VarInt).val < 128 then
-      simp [h₂, UInt8.parser]
+    if h₂ : v' / (128 : VarInt).val < 128 then
+      simp [h₂]
+      split
+      · next h_v_div_128_eq_0 =>
+        -- natify_uint8; simp at *
+        -- crush_lits; simp at *
+        -- omega
+
+
+        -- have : ↑(128 : VarInt) = (128 : Nat) := by rfl
+        -- simp [this] at *
+        -- omega
+        -- rw [this] at h₂
+
+
+
+        -- Manually solve current (impossible) goal
+
+        have h_contra : (UInt8.ofNat (v' / (128 : VarInt).val)).toNat = 0 := by
+          rw [h_v_div_128_eq_0]
+          rfl
+        simp at h_contra
+        have h_mod : v' / (128 : VarInt).val % 256 = v' / (128 : VarInt).val := by
+          apply Nat.mod_eq_of_lt
+          exact Nat.lt_trans h₂ (by decide)
+        rw [h_mod] at h_contra
+        have h_val : (128 : VarInt).val = 128 := rfl
+        rw [h_val] at h_contra
+        omega
+
+        -- END
+
+      have : 128 ≤ UInt8.ofNat (v' / (128 : VarInt).val) := by
+        rw [UInt8.le_iff_toNat_le]
+        simp
+        rw [Nat.mod_eq_of_lt]
+        · have bla := @Fin.eq_of_val_eq VarInt.limit 128 128 (by rfl)
+          have bla₂ : (128 : VarInt).val = 128 := by rfl
+          rw [bla₂] at h₂
+          rw [bla₂]
+          omega
+          sorry
 
       have : UInt8.ofNat (v.val / (128 : VarInt).val) < 128 := by
         rw [UInt8.lt_iff_toNat_lt]
@@ -344,7 +396,7 @@ theorem VarInt.roundtrip (v : VarInt) (rest : List UInt8) :
           -- Since `v` is limited by `VarInt.limit`, h₄ must be false.
           -- Grind solves the contradiction for us
           grind
-  -/
+
 
 example (b : UInt8) : b.toNat < 256 :=
   b.toBitVec.isLt
@@ -362,6 +414,15 @@ private theorem UInt8.toNat_pos {b : UInt8} (h : ¬b = 0) : 0 < b.toNat := by
     exact h_zero
   rw [h_bv_eq_zero]
   rfl
+private theorem UInt8.toNat_zero' {b : UInt8} (h : b = 0) : b.toNat = 0 := by
+  simp [← UInt8.toNat.inj]
+  cases b
+  rename_i bv
+  have h_bv_eq_zero : bv = 0 := by
+    apply BitVec.eq_of_toNat_eq
+
+    exact h
+
 private theorem UInt8.toNat_lt_256 (b : UInt8) : b.toNat < 256 :=
   b.toBitVec.isLt
 

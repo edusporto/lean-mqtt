@@ -67,8 +67,8 @@ abbrev VarInt.limit : Nat := 268_435_456
 -/
 abbrev VarInt := Fin VarInt.limit
 
-instance : Coe VarInt Nat where
-  coe v := v.val
+-- instance : Coe VarInt Nat where
+--   coe v := v.val
 
 def VarInt.serialize (v : VarInt) : List UInt8 :=
   if h : v.val < 128 then
@@ -105,7 +105,7 @@ def VarInt.parser : Parser VarInt := do
 
       let val := (b.toNat % 128) * mult + acc
 
-      -- If continuation bit is 1, keep looping
+      -- If the continuation bit is 1, keep looping
       if ¬(b < 128) then
         return ← loop (mult * 128) val fuel'
 
