@@ -5,6 +5,37 @@ import LeanMqtt.Packets.VarHeader.Properties.Proofs
 namespace Mqtt
 open Mqtt
 
+def Var_Connect.roundtrip (v : Var_Connect) (rest : List UInt8) :
+  Var_Connect.parser.run (v.serialize ++ rest) = some (v, rest) := by
+  simp [Var_Connect.parser, Var_Connect.serialize]
+  simp [Str.roundtrip]
+  simp [UInt8.roundtrip]
+  simp [Properties.roundtrip]
+
+theorem Var_Connack.roundtrip (v : Var_Connack) (rest : List UInt8) :
+  Var_Connack.parser.run (v.serialize ++ rest) = some (v, rest) := by
+  simp [Var_Connack.parser, Var_Connack.serialize]
+  simp [UInt8.roundtrip, Properties.roundtrip]
+
+theorem Var_Publish.roundtrip {qos} (v : Var_Publish qos) (rest : List UInt8) :
+  (Var_Publish.parser qos).run (v.serialize ++ rest) = some (v, rest) := by
+  simp [Var_Publish.parser, Var_Publish.serialize]
+  simp [Str.roundtrip]
+
+  split
+  · next h_qos =>
+    -- Case: QoS > 0
+    simp [UInt16.roundtrip]
+    simp [Properties.roundtrip]
+  · next h_qos =>
+    -- Case: QoS == 0
+    simp [Properties.roundtrip]
+    congr
+    have h_zero : qos = 0 := by bv_decide
+    subst h_zero
+    simp
+    apply Subsingleton.elim () v.packet_id
+
 theorem Var_Puback.roundtrip (v : Var_Puback) (rest : List UInt8) :
   parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [Var_Puback.parser, Var_Puback.serialize]
@@ -84,7 +115,6 @@ theorem VarHeader.roundtrip_value
   · simp [Var_Pingresp.roundtrip _ _]
   · simp [Var_Disconnect.roundtrip _ _]
   · simp [Var_Auth.roundtrip _ _]
-
 
 theorem VarHeader.roundtrip (h : FixedHeader) (v : VarHeader h) (rest : List UInt8) :
   (parser h).run (v.serialize h ++ rest) = some (v, rest) := by

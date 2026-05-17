@@ -1,4 +1,5 @@
 import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.SizedList.Basic
 import LeanMqtt.Packets.VarHeader.Property.Basic
 
 namespace Mqtt
@@ -59,10 +60,7 @@ theorem Property.parser_len_consumed (input : List UInt8) (p : Property) (rest :
   Property.parser.run input = some (p, rest) → input.length = p.byteSize + rest.length := by
   intro h
   have h_eq := Property.reconstruct _ _ _ h
-  calc
-    input.length = (p.serialize ++ rest).length     := by rw [h_eq]
-    _            = p.serialize.length + rest.length := by rw [List.length_append]
-    _            = p.byteSize + rest.length := rfl
+  simp [h_eq, List.length_append]
 
 theorem Property.byteSize_pos (p : Property) : 0 < p.byteSize := by
   -- We always encode the id as a `VarInt`, so the byte size of a
@@ -70,3 +68,10 @@ theorem Property.byteSize_pos (p : Property) : 0 < p.byteSize := by
   simp [Property.byteSize, Property.serialize]
   unfold VarInt.serialize
   grind
+
+instance : ChunkItem Property where
+  parser     := Property.parser
+  serialize  := Property.serialize
+  h_pos      := Property.byteSize_pos
+  h_consumed := Property.parser_len_consumed
+  roundtrip  := Property.roundtrip

@@ -4,6 +4,7 @@ import LeanMqtt.Helpers.NatifyUInt8
 import LeanMqtt.Helpers.CrushLits
 
 import LeanMqtt.Core.Parser.Proofs
+import LeanMqtt.Core.Codec
 import LeanMqtt.Primitives.Basic
 
 namespace Mqtt
@@ -577,3 +578,8 @@ theorem VarInt.reconstruct
                         -- Exceeded 4-byte fuel
                         unfold parser.loop at h_parse
                         contradiction
+
+instance : Codec VarInt where
+  parser    := VarInt.parser
+  serialize := VarInt.serialize
+  roundtrip := VarInt.roundtrip
