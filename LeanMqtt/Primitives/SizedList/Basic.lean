@@ -22,8 +22,8 @@ instance instGetByteSizeList {α : Type} [GetByteSize α] : GetByteSize (List α
 
 /- ============================== ChunkItem ================================ -/
 /--
-  A typeclass bundling a context-free parser and serializer for `α`,
-  along with the proofs required to safely parse it inside a bounded loop.
+  A typeclass bundling a parser and serializer for `α`, along with the proofs
+  required to safely parse it inside a bounded loop.
 -/
 class ChunkItem (α : Type) [GetByteSize α] where
   parser : Parser α
@@ -39,9 +39,9 @@ class ChunkItem (α : Type) [GetByteSize α] where
     parser.run (serialize a ++ rest) = some (a, rest)
 
 /--
-  Recursively parses items of type `α` from a bounded chunk of bytes.
+  Recursively parses items of type `α` from a bounded sequence of bytes.
   Returns the list of parsed items along with a proof that the sum of their
-  byte sizes exactly matches the original length of the input chunk.
+  byte sizes exactly matches the original length of the input.
 -/
 def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [ChunkItem α]
   (input : List UInt8) :
@@ -74,15 +74,24 @@ decreasing_by
 /- ============================== SizedList ================================ -/
 
 /--
-  A semantic alias for a list of items prefixed by a length field.
+  List of items preceeded by the sum of their byte sizes.
   Transparently resolves to `WithByteSize (List α) lenTyp`.
 -/
 abbrev SizedList (α lenTyp : Type) [GetByteSize α] [Coe lenTyp Nat] :=
   WithByteSize (List α) lenTyp
 
 /--
-  A parser combinator that automatically extracts the length parser
-  from the `Codec` typeclass.
+  Serializes a `SizedList` using a `Codec` for the length prefix
+  and `ChunkItem` for the elements.
+-/
+def SizedList.serialize {α lenTyp : Type}
+  [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
+  (sl : SizedList α lenTyp) : List UInt8 :=
+
+  Codec.serialize sl.len.val ++ sl.val.flatMap ChunkItem.serialize
+
+/--
+  Parses a `SizedList` with a `Codec` length prefix and `ChunkItem` elements
 -/
 def SizedList.parser {α lenTyp : Type}
   [GetByteSize α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp] :
@@ -99,13 +108,3 @@ def SizedList.parser {α lenTyp : Type}
 
     return { val := items, len := ⟨len, h_len⟩ }
   | none => none
-
-/--
-  Serializes a `SizedList` using the `Codec` for the length prefix
-  and `ChunkItem` for the elements.
--/
-def SizedList.serialize {α lenTyp : Type}
-  [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
-  (sl : SizedList α lenTyp) : List UInt8 :=
-
-  Codec.serialize sl.len.val ++ sl.val.flatMap ChunkItem.serialize
