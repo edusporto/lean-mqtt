@@ -34,9 +34,12 @@ class ChunkItem (α : Type) [GetByteSize α] where
   h_consumed : ∀ (input : List UInt8) (a : α) (rest : List UInt8),
     parser.run input = some (a, rest) → input.length = GetByteSize.byteSize a + rest.length
 
-  -- The fundamental correctness property for the element
+  -- Correctness property
   roundtrip : ∀ (a : α) (rest : List UInt8),
     parser.run (serialize a ++ rest) = some (a, rest)
+  -- Soundness property
+  reconstruct : ∀ (input : List UInt8) (a : α) (rest : List UInt8),
+    parser.run input = some (a, rest) → input = serialize a ++ rest
 
 /--
   Recursively parses items of type `α` from a bounded sequence of bytes.

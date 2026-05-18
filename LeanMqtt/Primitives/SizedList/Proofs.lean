@@ -78,6 +78,57 @@ theorem ChunkItem.parseChunkLoop_roundtrip {α : Type}
       rw [h_rt] at h_parse_eq
       contradiction
 
+theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
+  [GetByteSize α] [ChunkItem α]
+  (chunk : List UInt8) (items : List α) (h_len : chunk.length = (items.map GetByteSize.byteSize).sum) :
+  ChunkItem.parseChunkLoop chunk = some ⟨items, h_len⟩ →
+  chunk = items.flatMap ChunkItem.serialize := by
+
+  -- Induct structurally over the output list, generalizing the chunk and its length proof
+  -- so the induction hypothesis applies to the remaining `mid` chunk.
+  induction items generalizing chunk with
+  | nil =>
+    intro _ -- h_parse
+    simp only [List.map_nil, List.sum_nil, List.flatMap_nil] at h_len ⊢
+    cases chunk with
+    | nil => rfl
+    | cons hd tl => simp at h_len
+  | cons a as ih =>
+    intro h_parse
+    unfold ChunkItem.parseChunkLoop at h_parse
+    split at h_parse
+    · -- Case 1: chunk is empty
+      next h_empty =>
+        -- The parser returned `[]`, but we assumed it equals `a :: as`.
+        injection h_parse with h_eq
+        injection h_eq with h_contra
+        contradiction
+    · -- Case 2: chunk is not empty, parse single item
+      next h_not_empty =>
+        split at h_parse
+        · -- Item parse succeeded
+          next item mid h_item_parse =>
+            split at h_parse
+            · -- Tail parse succeeded
+              next tail h_tail_len h_tail_parse =>
+                -- Extract the equalities from the Subtype
+                injection h_parse with h_eq
+                injection h_eq with h_items
+                injection h_items with h_a h_as
+                subst h_a h_as
+
+                -- 1. Reconstruct the head
+                have h_rec_item := ChunkItem.reconstruct chunk item mid h_item_parse
+
+                -- 2. Use the induction hypothesis for the tail directly
+                have h_rec_tail := ih mid h_tail_len h_tail_parse
+
+                -- 3. Substitute and finish
+                rw [h_rec_item, h_rec_tail]
+                simp [List.flatMap_cons]
+            · contradiction
+        · contradiction
+
 theorem SizedList.roundtrip {α lenTyp : Type}
   [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
   (sl : SizedList α lenTyp) (rest : List UInt8) :
@@ -104,3 +155,39 @@ theorem SizedList.roundtrip {α lenTyp : Type}
   rw [h_loop_eq]
 
   simp
+
+theorem SizedList.reconstruct {α lenTyp : Type}
+  [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
+  (input : List UInt8) (sl : SizedList α lenTyp) (rest : List UInt8) :
+    SizedList.parser.run input = some (sl, rest) →
+    input = SizedList.serialize sl ++ rest
+  := by
+
+  simp only [SizedList.parser, SizedList.serialize]
+  intro h
+
+  obtain ⟨len, mid1, h_len, h_next1⟩ := Parser.bind_run_success _ _ _ _ _ h
+
+  obtain ⟨chunk, mid2, h_chunk, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next1
+
+  revert h_next2
+  split
+  · next items h_loop_len h_match =>
+    intro h_next2
+
+    obtain ⟨h_sl, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next2
+    subst h_rest
+
+    have h_rec_len   := Codec.reconstruct _ _ _ h_len
+    have h_rec_chunk := bytesParserWithProof_reconstruct _ _ _ _ h_chunk
+    have h_rec_loop  :=
+      ChunkItem.parseChunkLoop_reconstruct chunk.val items h_loop_len h_match
+
+    rw [h_rec_len, h_rec_chunk, h_rec_loop]
+
+    rw [h_sl]
+
+    simp [List.append_assoc]
+
+  · intro h_fail
+    contradiction

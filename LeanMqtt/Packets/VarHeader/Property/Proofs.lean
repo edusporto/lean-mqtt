@@ -70,8 +70,9 @@ theorem Property.byteSize_pos (p : Property) : 0 < p.byteSize := by
   grind
 
 instance : ChunkItem Property where
-  parser     := Property.parser
-  serialize  := Property.serialize
-  h_pos      := Property.byteSize_pos
-  h_consumed := Property.parser_len_consumed
-  roundtrip  := Property.roundtrip
+  parser      := Property.parser
+  serialize   := Property.serialize
+  h_pos       := Property.byteSize_pos
+  h_consumed  := Property.parser_len_consumed
+  roundtrip   := Property.roundtrip
+  reconstruct := Property.reconstruct

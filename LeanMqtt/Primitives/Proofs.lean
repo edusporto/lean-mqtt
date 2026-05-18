@@ -580,6 +580,7 @@ theorem VarInt.reconstruct
                         contradiction
 
 instance : Codec VarInt where
-  parser    := VarInt.parser
-  serialize := VarInt.serialize
-  roundtrip := VarInt.roundtrip
+  parser      := VarInt.parser
+  serialize   := VarInt.serialize
+  roundtrip   := VarInt.roundtrip
+  reconstruct := VarInt.reconstruct
