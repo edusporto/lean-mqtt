@@ -1,4 +1,5 @@
 import LeanMqtt.Primitives.Basic
+import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Packets.VarHeader.Properties.Basic
 
 namespace Mqtt
@@ -45,25 +46,25 @@ def Var_Connack.parser : Parser Var_Connack := do
 
 /- ========================= Var_Publish ========================= -/
 
-structure Var_Publish (qos : BitVec 2) where
+-- We now accept the proven QoSBits subtype directly
+structure Var_Publish (qos : QoSBits) where
   topic_name : Str
-  packet_id  : if qos > 0 then UInt16 else Unit
+  packet_id  : if qos.val > 0 then UInt16 else Unit
   props      : Properties
 
-def Var_Publish.serialize {qos} (v : Var_Publish qos) : List UInt8 :=
+def Var_Publish.serialize {qos : QoSBits} (v : Var_Publish qos) : List UInt8 :=
   v.topic_name.serialize ++
-  (if h : qos > 0 then
-    -- We must cast the dependent field to a concrete UInt16 to serialize it
+  (if h : qos.val > 0 then
     let pid : UInt16 := cast (by rw [if_pos h]) v.packet_id
     pid.serialize
    else []) ++
   v.props.serialize
 
-def Var_Publish.parser (qos : BitVec 2) : Parser (Var_Publish qos) := do
+def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
   let topic_name ← Str.parser
 
-  let packet_id : (if qos > 0 then UInt16 else Unit) ←
-    if h : qos > 0 then
+  let packet_id : (if qos.val > 0 then UInt16 else Unit) ←
+    if h : qos.val > 0 then
       let pid ← UInt16.parser
       pure (cast (by rw [if_pos h]) pid)
     else
@@ -78,7 +79,6 @@ def Var_Publish.parser (qos : BitVec 2) : Parser (Var_Publish qos) := do
 structure Var_Puback where
   packet_id   : UInt16
   reason_code : UInt8
-  -- TODO: dependent on remaining length
   props       : Properties
 
 def Var_Puback.serialize (v : Var_Puback) : List UInt8 :=
@@ -97,7 +97,6 @@ def Var_Puback.parser : Parser (Var_Puback) := do
 structure Var_Pubrec where
   packet_id   : UInt16
   reason_code : UInt8
-  -- TODO: dependent on remaining length
   props       : Properties
 
 def Var_Pubrec.serialize (v : Var_Pubrec) : List UInt8 :=

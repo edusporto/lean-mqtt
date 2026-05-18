@@ -17,21 +17,28 @@ theorem Var_Connack.roundtrip (v : Var_Connack) (rest : List UInt8) :
   simp [Var_Connack.parser, Var_Connack.serialize]
   simp [UInt8.roundtrip, Properties.roundtrip]
 
-theorem Var_Publish.roundtrip {qos} (v : Var_Publish qos) (rest : List UInt8) :
+theorem Var_Publish.roundtrip {qos : QoSBits} (v : Var_Publish qos) (rest : List UInt8) :
   (Var_Publish.parser qos).run (v.serialize ++ rest) = some (v, rest) := by
+
+  -- 1. Unpack the subtype into its raw value and proof immediately.
+  -- This prevents "motive is not type correct" errors later when we substitute.
+  rcases qos with ⟨qos_val, h_qos⟩
+
   simp [Var_Publish.parser, Var_Publish.serialize]
   simp [Str.roundtrip]
 
   split
-  · next h_qos =>
+  · next h_qos_pos =>
     -- Case: QoS > 0
     simp [UInt16.roundtrip]
     simp [Properties.roundtrip]
-  · next h_qos =>
+  · next h_qos_zero =>
     -- Case: QoS == 0
     simp [Properties.roundtrip]
     congr
-    have h_zero : qos = 0 := by bv_decide
+
+    have h_zero : qos_val = 0 := by bv_decide
+
     subst h_zero
     simp
     apply Subsingleton.elim () v.packet_id
@@ -95,26 +102,25 @@ theorem Var_Auth.roundtrip (v : Var_Auth) (rest : List UInt8) :
   simp [UInt8.roundtrip, Properties.roundtrip]
 
 theorem VarHeader.roundtrip_value
-  {w : WhichPkt} {f : WhichPkt.flagType w} (v : VarHeader.getType w f) (rest : List UInt8) :
-  (VarHeader.parserValue w f).run (VarHeader.serializeValue v ++ rest) = some (v, rest) := by
-  simp [parserValue, serializeValue]
-  split
-  repeat' simp only
-  · simp [Var_Connect.roundtrip _ _]
-  · simp [Var_Connack.roundtrip _ _]
-  · simp [Var_Publish.roundtrip _ _]
-  · simp [Var_Puback.roundtrip _ _]
-  · simp [Var_Pubrec.roundtrip _ _]
-  · simp [Var_Pubrel.roundtrip _ _]
-  · simp [Var_Pubcomp.roundtrip _ _]
-  · simp [Var_Subscribe.roundtrip _ _]
-  · simp [Var_Suback.roundtrip _ _]
-  · simp [Var_Unsubscribe.roundtrip _ _]
-  · simp [Var_Unsuback.roundtrip _ _]
-  · simp [Var_Pingreq.roundtrip _ _]
-  · simp [Var_Pingresp.roundtrip _ _]
-  · simp [Var_Disconnect.roundtrip _ _]
-  · simp [Var_Auth.roundtrip _ _]
+  {k : PktKind} {f : PktFlags k} (v : VarHeader.getType k f) (rest : List UInt8) :
+  (VarHeader.parserValue k f).run (VarHeader.serializeValue v ++ rest) = some (v, rest) := by
+
+  cases k <;> simp [parserValue, serializeValue]
+  · exact Var_Connect.roundtrip v rest
+  · exact Var_Connack.roundtrip v rest
+  · exact Var_Publish.roundtrip v rest
+  · exact Var_Puback.roundtrip v rest
+  · exact Var_Pubrec.roundtrip v rest
+  · exact Var_Pubrel.roundtrip v rest
+  · exact Var_Pubcomp.roundtrip v rest
+  · exact Var_Subscribe.roundtrip v rest
+  · exact Var_Suback.roundtrip v rest
+  · exact Var_Unsubscribe.roundtrip v rest
+  · exact Var_Unsuback.roundtrip v rest
+  · exact Var_Pingreq.roundtrip v rest
+  · exact Var_Pingresp.roundtrip v rest
+  · exact Var_Disconnect.roundtrip v rest
+  · exact Var_Auth.roundtrip v rest
 
 theorem VarHeader.roundtrip (h : FixedHeader) (v : VarHeader h) (rest : List UInt8) :
   (parser h).run (v.serialize h ++ rest) = some (v, rest) := by

@@ -3,156 +3,125 @@ import LeanMqtt.Primitives.Basic
 namespace Mqtt
 open Mqtt
 
-/- ========================= WhichPkt ========================= -/
+/- ========================= PktKind ========================= -/
 
-inductive WhichPkt where
-  | connect
-  | connack
-  | publish
-  | puback
-  | pubrec
-  | pubrel
-  | pubcomp
-  | subscribe
-  | suback
-  | unsubscribe
-  | unsuback
-  | pingreq
-  | pingresp
+inductive PktKind where
+  | connect | connack
+  | publish | puback | pubrec | pubrel | pubcomp
+  | subscribe | suback | unsubscribe | unsuback | pingreq | pingresp
   | disconnect
   | auth
 deriving Repr, BEq
 
-instance : Inhabited WhichPkt where
-  default := .pingreq
+def PktKind.encode : PktKind → BitVec 4
+  | .connect     => 1   | .connack     => 2   | .publish     => 3
+  | .puback      => 4   | .pubrec      => 5   | .pubrel      => 6
+  | .pubcomp     => 7   | .subscribe   => 8   | .suback      => 9
+  | .unsubscribe => 10  | .unsuback    => 11  | .pingreq     => 12
+  | .pingresp    => 13  | .disconnect  => 14  | .auth        => 15
 
-structure PublishFlags where
-  dup : BitVec 1
-  qos : BitVec 2
-  retain : BitVec 1
-
-def WhichPkt.flagType : WhichPkt → Type
-  | .connect     => { i : BitVec 4 // i = 0b0000 }
-  | .connack     => { i : BitVec 4 // i = 0b0000 }
-  | .publish     => PublishFlags
-  | .puback      => { i : BitVec 4 // i = 0b0000 }
-  | .pubrec      => { i : BitVec 4 // i = 0b0000 }
-  | .pubrel      => { i : BitVec 4 // i = 0b0010 }
-  | .pubcomp     => { i : BitVec 4 // i = 0b0000 }
-  | .subscribe   => { i : BitVec 4 // i = 0b0010 }
-  | .suback      => { i : BitVec 4 // i = 0b0000 }
-  | .unsubscribe => { i : BitVec 4 // i = 0b0010 }
-  | .unsuback    => { i : BitVec 4 // i = 0b0000 }
-  | .pingreq     => { i : BitVec 4 // i = 0b0000 }
-  | .pingresp    => { i : BitVec 4 // i = 0b0000 }
-  | .disconnect  => { i : BitVec 4 // i = 0b0000 }
-  | .auth        => { i : BitVec 4 // i = 0b0000 }
-
-def WhichPkt.encode (pkt : WhichPkt) : BitVec 4 :=
-  match pkt with
-  | .connect     => 1
-  | .connack     => 2
-  | .publish     => 3
-  | .puback      => 4
-  | .pubrec      => 5
-  | .pubrel      => 6
-  | .pubcomp     => 7
-  | .subscribe   => 8
-  | .suback      => 9
-  | .unsubscribe => 10
-  | .unsuback    => 11
-  | .pingreq     => 12
-  | .pingresp    => 13
-  | .disconnect  => 14
-  | .auth        => 15
-
-def WhichPkt.decode? : BitVec 4 → Option WhichPkt
-  | 1 => some .connect
-  | 2 => some .connack
-  | 3 => some .publish
-  | 4 => some .puback
-  | 5 => some .pubrec
-  | 6 => some .pubrel
-  | 7 => some .pubcomp
-  | 8 => some .subscribe
-  | 9 => some .suback
-  | 10 => some .unsubscribe
-  | 11 => some .unsuback
-  | 12 => some .pingreq
-  | 13 => some .pingresp
-  | 14 => some .disconnect
-  | 15 => some .auth
+def PktKind.decode? : BitVec 4 → Option PktKind
+  | 1 => some .connect    | 2 => some .connack     | 3 => some .publish
+  | 4 => some .puback     | 5 => some .pubrec      | 6 => some .pubrel
+  | 7 => some .pubcomp    | 8 => some .subscribe   | 9 => some .suback
+  | 10 => some .unsubscribe| 11 => some .unsuback  | 12 => some .pingreq
+  | 13 => some .pingresp  | 14 => some .disconnect | 15 => some .auth
   | _ => none
 
-def WhichPkt.encodeFlags (which : WhichPkt) (flags : WhichPkt.flagType which) : BitVec 4 :=
-  match which with
-  | .publish =>
-    flags.dup
-    |>.append flags.qos
-    |>.append flags.retain
-    | .connect     => flags.val
-    | .connack     => flags.val
-    | .puback      => flags.val
-    | .pubrec      => flags.val
-    | .pubrel      => flags.val
-    | .pubcomp     => flags.val
-    | .subscribe   => flags.val
-    | .suback      => flags.val
-    | .unsubscribe => flags.val
-    | .unsuback    => flags.val
-    | .pingreq     => flags.val
-    | .pingresp    => flags.val
-    | .disconnect  => flags.val
-    | .auth        => flags.val
+instance : Inhabited PktKind where
+  default := .pingreq
 
-def WhichPkt.decodeFlags (which : WhichPkt) (flagsBv4 : BitVec 4) : Option (WhichPkt.flagType which) :=
-  match which with
+/- =========================  Flags ========================= -/
+
+abbrev QoSBits := { q : BitVec 2 // q ≠ 0b11 }
+
+structure PublishFlags where
+  dup    : BitVec 1
+  qos    : QoSBits
+  retain : BitVec 1
+deriving Repr, BEq
+
+/-- A simple type alias for bits that must match a specific constant value. -/
+abbrev ConstBits (bits : Nat) (v : BitVec bits) := { b : BitVec bits // b = v }
+
+def PktFlags : PktKind → Type
+  | .connect     => ConstBits 4 0b0000
+  | .connack     => ConstBits 4 0b0000
+  | .publish     => PublishFlags
+  | .puback      => ConstBits 4 0b0000
+  | .pubrec      => ConstBits 4 0b0000
+  | .pubrel      => ConstBits 4 0b0010
+  | .pubcomp     => ConstBits 4 0b0000
+  | .subscribe   => ConstBits 4 0b0010
+  | .suback      => ConstBits 4 0b0000
+  | .unsubscribe => ConstBits 4 0b0010
+  | .unsuback    => ConstBits 4 0b0000
+  | .pingreq     => ConstBits 4 0b0000
+  | .pingresp    => ConstBits 4 0b0000
+  | .disconnect  => ConstBits 4 0b0000
+  | .auth        => ConstBits 4 0b0000
+
+def PktFlags.encode : (k : PktKind) → PktFlags k → BitVec 4
+  | .publish, f     => f.dup ++ f.qos.val ++ f.retain
+  -- For all constant bits, we just extract the underlying BitVec value
+  | .pubrel, f      => f.val
+  | .subscribe, f   => f.val
+  | .unsubscribe, f => f.val
+  | .connect, f     => f.val
+  | .connack, f     => f.val
+  | .puback, f      => f.val
+  | .pubrec, f      => f.val
+  | .pubcomp, f     => f.val
+  | .suback, f      => f.val
+  | .unsuback, f    => f.val
+  | .pingreq, f     => f.val
+  | .pingresp, f    => f.val
+  | .disconnect, f  => f.val
+  | .auth, f        => f.val
+
+/--
+  Decodes and validates the raw bits. If successful, it constructs the
+  dependent type `PktFlags k` using the proofs generated by the `if h : ...` checks.
+-/
+def PktFlags.decode? (k : PktKind) (b : BitVec 4) : Option (PktFlags k) :=
+  match k with
   | .publish =>
-    let dup    := flagsBv4.extractLsb 3 3
-    let qos    := flagsBv4.extractLsb 2 1
-    let retain := flagsBv4.extractLsb 0 0
-    some { dup, qos, retain }
-  -- Flags must be 0b10
+      let dup    := b.extractLsb 3 3
+      let qos    := b.extractLsb 2 1
+      let retain := b.extractLsb 0 0
+      if qos = 0b11 then none
+      else if h : qos ≠ 3 then
+        some { dup, qos := ⟨qos, h⟩, retain }
+      else
+        none
   | .pubrel | .subscribe | .unsubscribe =>
-    if h : flagsBv4 = 0b0010 then some ⟨flagsBv4, h⟩ else none
-  -- Flags must be 0b00
-  | .connect  | .connack | .puback   | .pubrec     | .pubcomp | .suback
+      if h : b = 0b0010 then some ⟨b, h⟩ else none
+  | .connect | .connack | .puback | .pubrec | .pubcomp | .suback
   | .unsuback | .pingreq | .pingresp | .disconnect | .auth =>
-    if h : flagsBv4 = 0b0000 then some ⟨flagsBv4, h⟩ else none
-
-def WhichPkt.serialize (which : WhichPkt) (flags : WhichPkt.flagType which) : List UInt8 :=
-  let byte := which
-    |>.encode
-    |>.append (which.encodeFlags flags)
-  UInt8.ofBitVec byte |>.serialize
-
-def WhichPkt.parser : Parser ((which : WhichPkt) × WhichPkt.flagType which) := do
-  let byte ← UInt8.parser
-  let bv := byte.toBitVec
-
-  let whichBits := bv.extractLsb 7 4
-  let flagsBits := bv.extractLsb 3 0
-
-  let which ← WhichPkt.decode? whichBits
-  let flags ← WhichPkt.decodeFlags which flagsBits
-  return ⟨which, flags⟩
+      if h : b = 0b0000 then some ⟨b, h⟩ else none
 
 /- ========================= FixedHeader ========================= -/
 
 structure FixedHeader where
-  which : WhichPkt
-  flags : WhichPkt.flagType which
-  size  : VarInt -- TODO: depend on information after
+  kind  : PktKind
+  flags : PktFlags kind
+  size  : VarInt
 
-
-def FixedHeader.serialize : FixedHeader → List UInt8 :=
-  fun ⟨which, flags, size⟩ =>
-    let byte1 := which.serialize flags
-    byte1 ++ (VarInt.serialize size)
+def FixedHeader.serialize (h : FixedHeader) : List UInt8 :=
+  let byte := h.kind.encode ++ PktFlags.encode h.kind h.flags
+  [UInt8.ofBitVec byte] ++ h.size.serialize
 
 def FixedHeader.parser : Parser FixedHeader := do
-  let ⟨which, flags⟩ ← WhichPkt.parser
+  let byte ← UInt8.parser
+  let bv := byte.toBitVec
+
+  let kindBits  := bv.extractLsb 7 4
+  let flagsBits := bv.extractLsb 3 0
+
+  let kind ← PktKind.decode? kindBits
+  let flags ← PktFlags.decode? kind flagsBits
+
   let size ← VarInt.parser
-  return { which, flags, size }
+  return { kind, flags, size }
 
 end Mqtt
