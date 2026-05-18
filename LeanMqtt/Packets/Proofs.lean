@@ -5,13 +5,13 @@ import LeanMqtt.Packets.VarHeader.Proofs
 namespace Mqtt
 
 def Header.roundtrip (h : Header) (rest : List UInt8) :
-  parser.run (h.serialize ++ rest) = some (h, rest) := by
+  Header.parser.run (h.serialize ++ rest) = some (h, rest) := by
   simp [parser, serialize]
   simp [FixedHeader.roundtrip]
   simp [VarHeader.roundtrip]
 
 theorem Header.reconstruct (input : List UInt8) (h : Header) (rest : List UInt8) :
-  parser.run input = some (h, rest) → input = h.serialize ++ rest := by
+  Header.parser.run input = some (h, rest) → input = h.serialize ++ rest := by
 
   simp only [parser, serialize]
   intro h_run
