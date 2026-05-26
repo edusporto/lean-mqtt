@@ -6,11 +6,11 @@ namespace Mqtt
 open Mqtt
 
 theorem PktKind.decode_encode (k : PktKind) :
-  PktKind.decode? k.encode = some k := by
+    PktKind.decode? k.encode = some k := by
   cases k <;> rfl
 
 theorem PktFlags.encode_decode (k : PktKind) (f : PktFlags k) :
-  PktFlags.decode? k (PktFlags.encode k f) = some f := by
+    PktFlags.decode? k (PktFlags.encode k f) = some f := by
   cases k
   case publish =>
     rcases f with ⟨dup, ⟨qos_val, h_qos⟩, retain⟩
@@ -29,13 +29,13 @@ theorem PktFlags.encode_decode (k : PktKind) (f : PktFlags k) :
   }
 
 theorem PktKind.decode_eq_encode (b : BitVec 4) (k : PktKind) :
-  PktKind.decode? b = some k → b = k.encode := by
+    PktKind.decode? b = some k → b = k.encode := by
   intro h
   unfold PktKind.decode? at h
   split at h <;> cases h <;> rfl
 
 theorem PktFlags.decode_eq_encode (k : PktKind) (b : BitVec 4) (f : PktFlags k) :
-  PktFlags.decode? k b = some f → b = PktFlags.encode k f := by
+    PktFlags.decode? k b = some f → b = PktFlags.encode k f := by
   intro h
 
   cases k <;> dsimp only [PktFlags.decode?] at h
@@ -56,7 +56,7 @@ theorem PktFlags.decode_eq_encode (k : PktKind) (b : BitVec 4) (f : PktFlags k) 
   }
 
 theorem FixedHeader.roundtrip (header : FixedHeader) (rest : List UInt8) :
-  FixedHeader.parser.run (header.serialize ++ rest) = some (header, rest) := by
+    FixedHeader.parser.run (header.serialize ++ rest) = some (header, rest) := by
 
   simp [FixedHeader.parser, FixedHeader.serialize, UInt8.parser]
   simp [Option.bind]
@@ -75,19 +75,8 @@ theorem FixedHeader.roundtrip (header : FixedHeader) (rest : List UInt8) :
   rw [VarInt.roundtrip]
   simp
 
-theorem Parser.liftM_run_success {α : Type} (opt : Option α) (input rest : List UInt8) (res : α) :
-  (liftM opt : Parser α).run input = some (res, rest) → opt = some res ∧ input = rest := by
-  intro h
-  simp [Option.bind] at h
-  split at h
-  · contradiction
-  · injection h with h_eq
-    injection h_eq with h_res h_rest
-    subst h_res h_rest
-    exact ⟨rfl, rfl⟩
-
 theorem FixedHeader.reconstruct (input : List UInt8) (header : FixedHeader) (rest : List UInt8) :
-  FixedHeader.parser.run input = some (header, rest) → input = header.serialize ++ rest := by
+    FixedHeader.parser.run input = some (header, rest) → input = header.serialize ++ rest := by
 
   simp only [FixedHeader.parser, FixedHeader.serialize]
   intro h

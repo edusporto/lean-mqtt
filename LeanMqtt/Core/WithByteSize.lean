@@ -1,22 +1,14 @@
 class GetByteSize (α : Type u) where
   byteSize : α → Nat
 
-/-- In MQTT, a String's length is actually the number of bytes it contains. -/
+/-- The length of a string in MQTT is the number of bytes it contains. -/
 @[reducible]
 instance instStringByteLength : GetByteSize String where
   byteSize s := s.utf8ByteSize
 
--- @[reducible]
--- instance : GetByteSize String where
---   length := String.length
-
 @[reducible]
 instance : GetByteSize (Array UInt8) where
   byteSize := Array.size
-
--- @[reducible]
--- instance {α} : GetByteSize (Array α) where
---   length := Array.size
 
 -- class LengthEmbedding (lenTyp : Type) where
 --   toNat : lenTyp → Nat
@@ -31,6 +23,6 @@ structure WithByteSize (α lenTyp) [s : GetByteSize α] [Coe lenTyp Nat] where
 
 @[simp]
 theorem WithByteSize.len_eq {α lenTyp} [GetByteSize α] [Coe lenTyp Nat]
-  (w : WithByteSize α lenTyp) :
-  ↑w.len.val = GetByteSize.byteSize w.val :=
+    (w : WithByteSize α lenTyp) :
+    ↑w.len.val = GetByteSize.byteSize w.val :=
   w.len.property

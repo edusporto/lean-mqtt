@@ -85,8 +85,22 @@ theorem Parser.bind_run_success
 
 theorem Parser.pure_run_success
     {α : Type}
-    (a : α) (input rest : List UInt8) (res : α) :
-    (pure a : Parser α).run input = some (res, rest) → res = a ∧ input = rest := by
+    (a : α) (input rest : List UInt8) (result : α) :
+    (pure a : Parser α).run input = some (result, rest) → result = a ∧ input = rest := by
   intro h
   simp [pure, StateT.run, StateT.pure] at h
   grind
+
+theorem Parser.liftM_run_success
+    {α : Type}
+    (opt : Option α) (input rest : List UInt8) (result : α) :
+    (liftM opt : Parser α).run input = some (result, rest) → opt = some result ∧ input = rest := by
+  intro h
+  simp [Option.bind] at h
+  split at h
+  · contradiction
+  · next =>
+    injection h with h_eq
+    injection h_eq with h_res h_rest
+    subst h_res h_rest
+    exact ⟨rfl, rfl⟩

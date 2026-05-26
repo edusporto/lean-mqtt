@@ -11,15 +11,15 @@ namespace Mqtt
 open Mqtt
 
 theorem UInt8.parser_len (n : UInt8) :
-  n.serialize.length = 1 := by
+    n.serialize.length = 1 := by
   rfl
 
 theorem UInt8.roundtrip (b : UInt8) (rest : List UInt8) :
-  UInt8.parser.run (b.serialize ++ rest) = some (b, rest) := by
-  simp [UInt8.parser, UInt8.serialize]
+    UInt8.parser.run (b.serialize ++ rest) = some (b, rest) := by
+    simp [UInt8.parser, UInt8.serialize]
 
 theorem UInt8.reconstruct (input : List UInt8) (b : UInt8) (rest : List UInt8) :
-  UInt8.parser.run input = some (b, rest) → input = b.serialize ++ rest := by
+    UInt8.parser.run input = some (b, rest) → input = b.serialize ++ rest := by
   simp [UInt8.parser, UInt8.serialize, StateT.run_bind, StateT.run_get]
   split
   · intro h
@@ -31,11 +31,11 @@ theorem UInt8.reconstruct (input : List UInt8) (b : UInt8) (rest : List UInt8) :
     rfl
 
 theorem UInt16.parser_len (n : UInt16) :
-  n.serialize.length = 2 := by
-  rfl-- simp [UInt16.serialize]
+    n.serialize.length = 2 := by
+  rfl
 
 theorem UInt16.roundtrip (n : UInt16) (rest : List UInt8) :
-  UInt16.parser.run (n.serialize ++ rest) = some (n, rest) := by
+    UInt16.parser.run (n.serialize ++ rest) = some (n, rest) := by
   simp [UInt16.parser]
   rw [←UInt16.parser_len n]
   rw [Parser.bytes_roundtrip _ _]
@@ -43,7 +43,7 @@ theorem UInt16.roundtrip (n : UInt16) (rest : List UInt8) :
   bv_decide
 
 theorem UInt16.reconstruct (input : List UInt8) (n : UInt16) (rest : List UInt8) :
-  UInt16.parser.run input = some (n, rest) → input = n.serialize ++ rest := by
+    UInt16.parser.run input = some (n, rest) → input = n.serialize ++ rest := by
 
   simp only [UInt16.parser, UInt16.serialize]
   intro h
@@ -64,11 +64,11 @@ theorem UInt16.reconstruct (input : List UInt8) (n : UInt16) (rest : List UInt8)
   · contradiction
 
 theorem UInt32.parser_len (n : UInt32) :
-  n.serialize.length = 4 := by
+    n.serialize.length = 4 := by
   rfl
 
 theorem UInt32.roundtrip (n : UInt32) (rest : List UInt8) :
-  UInt32.parser.run (n.serialize ++ rest) = some (n, rest) := by
+    UInt32.parser.run (n.serialize ++ rest) = some (n, rest) := by
   simp [UInt32.parser]
   rw [←UInt32.parser_len n]
   rw [Parser.bytes_roundtrip _ _]
@@ -76,7 +76,7 @@ theorem UInt32.roundtrip (n : UInt32) (rest : List UInt8) :
   bv_decide
 
 theorem UInt32.reconstruct (input : List UInt8) (n : UInt32) (rest : List UInt8) :
-  UInt32.parser.run input = some (n, rest) → input = n.serialize ++ rest := by
+    UInt32.parser.run input = some (n, rest) → input = n.serialize ++ rest := by
 
   simp only [UInt32.parser, UInt32.serialize]
   intro h
@@ -96,7 +96,7 @@ theorem UInt32.reconstruct (input : List UInt8) (n : UInt32) (rest : List UInt8)
   · contradiction
 
 theorem String.serialize_len (s : String) :
-  s.serialize.length = s.utf8ByteSize := by
+    s.serialize.length = s.utf8ByteSize := by
   rw [String.utf8ByteSize_ofByteArray]
   simp [String.serialize, String.toUTF8_eq_toByteArray]
   rw [Helpers.bytearray_tolist_eq_data_tolist]
@@ -104,7 +104,7 @@ theorem String.serialize_len (s : String) :
   exact @Array.size_eq_length_toList UInt8 s.toByteArray.data
 
 theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
-  (String.parser len).run inp = some (s, rest) → s.utf8ByteSize = len := by
+    (String.parser len).run inp = some (s, rest) → s.utf8ByteSize = len := by
   simp [String.parser]
   simp [Option.bind]
   intro h
@@ -122,7 +122,7 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
     · contradiction
 
 theorem String.roundtrip (s : String) (rest : List UInt8) :
-  (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
+    (String.parser s.serialize.length).run (s.serialize ++ rest) = some (s, rest) := by
   simp only [String.serialize, String.parser]
   simp [String.toUTF8_eq_toByteArray, Option.bind]
   rw [Parser.bytes_roundtrip]
@@ -135,7 +135,8 @@ theorem String.roundtrip (s : String) (rest : List UInt8) :
     exact absurd s.isValidUTF8 h
 
 theorem String.roundtrip_proof (s : String) (rest : List UInt8) :
-  (String.parserWithProof s.serialize.length).run (s.serialize ++ rest) = some (⟨s, s.serialize_len.symm⟩, rest) := by
+    (String.parserWithProof s.serialize.length).run (s.serialize ++ rest) =
+    some (⟨s, s.serialize_len.symm⟩, rest) := by
   simp [String.parserWithProof]
   simp [Option.bind]
   split
@@ -159,8 +160,8 @@ theorem String.roundtrip_proof (s : String) (rest : List UInt8) :
       exact absurd s.isValidUTF8 h_wrong
 
 theorem String.reconstructWithProof (len : Nat) (input : List UInt8)
-  (s : { s : String // s.utf8ByteSize = len }) (rest : List UInt8) :
-  (String.parserWithProof len).run input = some (s, rest) → input = s.val.serialize ++ rest := by
+    (s : { s : String // s.utf8ByteSize = len }) (rest : List UInt8) :
+    (String.parserWithProof len).run input = some (s, rest) → input = s.val.serialize ++ rest := by
 
   simp only [String.parserWithProof, String.serialize]
   intro h
@@ -178,9 +179,9 @@ theorem String.reconstructWithProof (len : Nat) (input : List UInt8)
   · contradiction
 
 theorem String.parserWithProof_eq_parser_success (n : Nat) (inp : List UInt8)
-  (s : String) (rest : List UInt8) :
-  (String.parser n).run inp = some (s, rest) →
-  ∃ h, (String.parserWithProof n).run inp = some (⟨s, h⟩, rest) := by
+    (s : String) (rest : List UInt8) :
+    (String.parser n).run inp = some (s, rest) →
+    ∃ h, (String.parserWithProof n).run inp = some (⟨s, h⟩, rest) := by
   intro h_simple
   have h_parser_len := String.parser_len _ _ _ _ h_simple
 
@@ -208,7 +209,7 @@ theorem String.parserWithProof_eq_parser_success (n : Nat) (inp : List UInt8)
     · contradiction
 
 theorem Str.roundtrip (s : Str) (rest : List UInt8) :
-  Str.parser.run (s.serialize ++ rest) = some (s, rest) := by
+    Str.parser.run (s.serialize ++ rest) = some (s, rest) := by
   simp only [Str.parser, Str.serialize]
   simp only [
     bind_pure_comp, List.append_assoc, StateT.run_bind, StateT.run_map,
@@ -240,7 +241,7 @@ theorem Str.roundtrip (s : Str) (rest : List UInt8) :
   rw [h_dep]
 
 theorem Str.reconstruct (input : List UInt8) (s : Str) (rest : List UInt8) :
-  Str.parser.run input = some (s, rest) → input = s.serialize ++ rest := by
+    Str.parser.run input = some (s, rest) → input = s.serialize ++ rest := by
 
   simp only [Str.parser, Str.serialize]
   intro h
@@ -257,16 +258,12 @@ theorem Str.reconstruct (input : List UInt8) (s : Str) (rest : List UInt8) :
   simp [List.append_assoc]
 
 theorem StrPair.roundtrip (p : StrPair) (rest : List UInt8) :
-  StrPair.parser.run (p.serialize ++ rest) = some (p, rest) := by
-  simp only [StrPair.parser, StrPair.serialize]
-  simp only [
-    bind_pure_comp, List.append_assoc, StateT.run_bind, StateT.run_map,
-    Option.map_eq_map, Option.map, Option.bind_eq_bind, Option.bind
-  ]
+    StrPair.parser.run (p.serialize ++ rest) = some (p, rest) := by
+  simp [StrPair.parser, StrPair.serialize, Option.bind, Option.map]
   simp only [Str.roundtrip _ _]
 
 theorem StrPair.reconstruct (input : List UInt8) (p : StrPair) (rest : List UInt8) :
-  StrPair.parser.run input = some (p, rest) → input = p.serialize ++ rest := by
+    StrPair.parser.run input = some (p, rest) → input = p.serialize ++ rest := by
   simp only [StrPair.parser, StrPair.serialize]
   intro h
 
@@ -282,7 +279,7 @@ theorem StrPair.reconstruct (input : List UInt8) (p : StrPair) (rest : List UInt
   rw [rec1, rec2, List.append_assoc]
 
 theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
-  BinaryData.parser.run (b.serialize ++ rest) = some (b, rest) := by
+    BinaryData.parser.run (b.serialize ++ rest) = some (b, rest) := by
   simp only [BinaryData.parser, BinaryData.serialize]
   simp [Option.bind, Option.map]
 
@@ -306,7 +303,7 @@ theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
   rw [h_dep]
 
 theorem BinaryData.reconstruct (input : List UInt8) (b : BinaryData) (rest : List UInt8) :
-  BinaryData.parser.run input = some (b, rest) → input = b.serialize ++ rest := by
+    BinaryData.parser.run input = some (b, rest) → input = b.serialize ++ rest := by
 
   simp only [BinaryData.parser, BinaryData.serialize]
   intro h

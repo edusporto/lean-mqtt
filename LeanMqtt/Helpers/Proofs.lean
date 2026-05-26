@@ -115,7 +115,7 @@ theorem Helpers.bytearray_list_roundtrip (arr : ByteArray) :
   exact h_lists
 
 theorem Helpers.list_bytearray_roundtrip (l : List UInt8) :
-  l.toByteArray.toList = l := by
+    l.toByteArray.toList = l := by
   rw [Helpers.bytearray_tolist_eq_data_tolist]
 
   have loop_append (r : ByteArray) :

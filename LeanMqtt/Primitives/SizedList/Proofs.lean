@@ -10,15 +10,15 @@ namespace Mqtt
 open Mqtt
 
 theorem ChunkItem.serialize_length {α : Type} [GetByteSize α] [ChunkItem α] (a : α) :
-  (ChunkItem.serialize a).length = GetByteSize.byteSize a := by
+    (ChunkItem.serialize a).length = GetByteSize.byteSize a := by
   have h_rt := ChunkItem.roundtrip a []
   have h_c := ChunkItem.h_consumed (ChunkItem.serialize a ++ []) a [] h_rt
   simp at h_c
   exact h_c
 
 theorem ChunkItem.serialize_list_length {α : Type}
-  [GetByteSize α] [ChunkItem α] (l : List α) :
-  (l.flatMap ChunkItem.serialize).length = List.rawByteSize l := by
+    [GetByteSize α] [ChunkItem α] (l : List α) :
+    (l.flatMap ChunkItem.serialize).length = List.rawByteSize l := by
   induction l with
   | nil => rfl
   | cons a as ih =>
@@ -28,8 +28,8 @@ theorem ChunkItem.serialize_list_length {α : Type}
     rfl
 
 theorem ChunkItem.serialize_not_empty {α : Type}
-  [GetByteSize α] [ChunkItem α] (a : α) (rest : List UInt8) :
-  (ChunkItem.serialize a ++ rest).isEmpty = false := by
+    [GetByteSize α] [ChunkItem α] (a : α) (rest : List UInt8) :
+    (ChunkItem.serialize a ++ rest).isEmpty = false := by
   cases h : ChunkItem.serialize a ++ rest with
   | nil =>
     have h_len : (ChunkItem.serialize a ++ rest).length = 0 := by rw [h]; rfl
@@ -40,8 +40,8 @@ theorem ChunkItem.serialize_not_empty {α : Type}
   | cons _ _ => rfl
 
 theorem ChunkItem.parseChunkLoop_roundtrip {α : Type}
-  [s : GetByteSize α] [c : ChunkItem α] (l : List α) :
-  ∃ h, ChunkItem.parseChunkLoop (l.flatMap ChunkItem.serialize) = some ⟨l, h⟩ := by
+    [s : GetByteSize α] [c : ChunkItem α] (l : List α) :
+    ∃ h, ChunkItem.parseChunkLoop (l.flatMap ChunkItem.serialize) = some ⟨l, h⟩ := by
   induction l with
   | nil =>
     simp [List.flatMap_nil]
@@ -79,10 +79,10 @@ theorem ChunkItem.parseChunkLoop_roundtrip {α : Type}
       contradiction
 
 theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
-  [GetByteSize α] [ChunkItem α]
-  (chunk : List UInt8) (items : List α) (h_len : chunk.length = (items.map GetByteSize.byteSize).sum) :
-  ChunkItem.parseChunkLoop chunk = some ⟨items, h_len⟩ →
-  chunk = items.flatMap ChunkItem.serialize := by
+    [GetByteSize α] [ChunkItem α]
+    (chunk : List UInt8) (items : List α) (h_len : chunk.length = (items.map GetByteSize.byteSize).sum) :
+    ChunkItem.parseChunkLoop chunk = some ⟨items, h_len⟩ →
+    chunk = items.flatMap ChunkItem.serialize := by
 
   -- Induct structurally over the output list, generalizing the chunk and its length proof
   -- so the induction hypothesis applies to the remaining `mid` chunk.
@@ -130,9 +130,9 @@ theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
         · contradiction
 
 theorem SizedList.roundtrip {α lenTyp : Type}
-  [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
-  (sl : SizedList α lenTyp) (rest : List UInt8) :
-  SizedList.parser.run (SizedList.serialize sl ++ rest) = some (sl, rest) := by
+    [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
+    (sl : SizedList α lenTyp) (rest : List UInt8) :
+    SizedList.parser.run (SizedList.serialize sl ++ rest) = some (sl, rest) := by
 
   simp [SizedList.parser, SizedList.serialize, Option.bind]
 
@@ -157,11 +157,10 @@ theorem SizedList.roundtrip {α lenTyp : Type}
   simp
 
 theorem SizedList.reconstruct {α lenTyp : Type}
-  [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
-  (input : List UInt8) (sl : SizedList α lenTyp) (rest : List UInt8) :
+    [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
+    (input : List UInt8) (sl : SizedList α lenTyp) (rest : List UInt8) :
     SizedList.parser.run input = some (sl, rest) →
-    input = SizedList.serialize sl ++ rest
-  := by
+    input = SizedList.serialize sl ++ rest := by
 
   simp only [SizedList.parser, SizedList.serialize]
   intro h

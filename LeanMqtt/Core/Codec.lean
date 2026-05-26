@@ -4,8 +4,8 @@ namespace Mqtt
 open Mqtt
 
 /--
-  A typeclass for basic, context-free types that can be serialized
-  and parsed without any external information.
+  A typeclass for basic types that can be serialized and parsed without
+  any external information.
 -/
 class Codec (α : Type) where
   parser : Parser α

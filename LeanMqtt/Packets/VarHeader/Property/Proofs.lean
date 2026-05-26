@@ -6,7 +6,7 @@ namespace Mqtt
 open Mqtt
 
 def Property.roundtrip_kind (k : Kind) (val : Property.typeOfKind k) (rest : List UInt8) :
-  (Property.parserKind k).run (Property.serializeKind k val ++ rest) = some (val, rest) := by
+    (Property.parserKind k).run (Property.serializeKind k val ++ rest) = some (val, rest) := by
   simp [Property.parserKind, Property.serializeKind]
   split
   repeat' simp only
@@ -20,8 +20,9 @@ def Property.roundtrip_kind (k : Kind) (val : Property.typeOfKind k) (rest : Lis
   · contradiction
 
 theorem Property.reconstruct_kind (k : Property.Kind) (input : List UInt8)
-  (val : Property.typeOfKind k) (rest : List UInt8) :
-  (Property.parserKind k).run input = some (val, rest) → input = Property.serializeKind k val ++ rest := by
+    (val : Property.typeOfKind k) (rest : List UInt8) :
+    (Property.parserKind k).run input = some (val, rest) →
+    input = Property.serializeKind k val ++ rest := by
   cases k <;> simp only [Property.parserKind, Property.serializeKind]
   · exact UInt8.reconstruct input val rest
   · exact UInt16.reconstruct input val rest
@@ -33,14 +34,14 @@ theorem Property.reconstruct_kind (k : Property.Kind) (input : List UInt8)
   · intro h; contradiction
 
 theorem Property.roundtrip (p : Property) (rest : List UInt8) :
-  Property.parser.run (p.serialize ++ rest) = some (p, rest) := by
+    Property.parser.run (p.serialize ++ rest) = some (p, rest) := by
   simp [Property.parser, Property.serialize]
   simp [Option.bind, Option.map]
   simp [VarInt.roundtrip]
   simp [Property.roundtrip_kind]
 
 theorem Property.reconstruct (input : List UInt8) (p : Property) (rest : List UInt8) :
-  Property.parser.run input = some (p, rest) → input = p.serialize ++ rest := by
+    Property.parser.run input = some (p, rest) → input = p.serialize ++ rest := by
 
   simp only [Property.parser, Property.serialize]
   intro h
@@ -57,7 +58,7 @@ theorem Property.reconstruct (input : List UInt8) (p : Property) (rest : List UI
   simp [List.append_assoc]
 
 theorem Property.parser_len_consumed (input : List UInt8) (p : Property) (rest : List UInt8) :
-  Property.parser.run input = some (p, rest) → input.length = p.byteSize + rest.length := by
+    Property.parser.run input = some (p, rest) → input.length = p.byteSize + rest.length := by
   intro h
   have h_eq := Property.reconstruct _ _ _ h
   simp [h_eq, List.length_append]
