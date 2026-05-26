@@ -101,7 +101,7 @@ def SizedList.parser {α lenTyp : Type}
   Parser (SizedList α lenTyp) := do
 
   let len : lenTyp ← Codec.parser
-  let ⟨chunk, h_chunk_len⟩ ← bytesParserWithProof (len : Nat)
+  let ⟨chunk, h_chunk_len⟩ ← Parser.bytesWithProof (len : Nat)
 
   match ChunkItem.parseChunkLoop chunk with
   | some ⟨items, h_loop_len⟩ =>

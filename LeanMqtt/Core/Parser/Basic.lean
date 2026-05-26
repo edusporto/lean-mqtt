@@ -1,10 +1,6 @@
 abbrev Parser (α : Type) := StateT (List UInt8) Option α
 
-theorem Parser.parser_app_is_run {α} {l : List UInt8} (p : Parser α) :
-  p l = p.run l :=
-  rfl
-
-def bytesParser (n : Nat) : Parser (List UInt8) := do
+def Parser.bytes (n : Nat) : Parser (List UInt8) := do
   let s ← get
   if s.length < n then
     none
@@ -14,7 +10,7 @@ def bytesParser (n : Nat) : Parser (List UInt8) := do
     set rest
     return chunk
 
-def bytesParserWithProof (n : Nat) : Parser { l : List UInt8 // l.length = n } := do
+def Parser.bytesWithProof (n : Nat) : Parser { l : List UInt8 // l.length = n } := do
   let s ← get
   if h : s.length < n then
     none

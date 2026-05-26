@@ -28,7 +28,7 @@ def UInt16.serialize (n : UInt16) : List UInt8 :=
   [b1, b2]
 
 def UInt16.parser : Parser UInt16 := do
-  let bytes ← bytesParser 2
+  let bytes ← Parser.bytes 2
   match bytes with
   | [b1, b2] => return (b1.toUInt16 <<< 8) ||| b2.toUInt16
   -- Note: the empty case is impossible.
@@ -46,7 +46,7 @@ def UInt32.serialize (n : UInt32) : List UInt8 :=
   [b1, b2, b3, b4]
 
 def UInt32.parser : Parser UInt32 := do
-  let bytes ← bytesParser 4
+  let bytes ← Parser.bytes 4
   match bytes with
   | [b1, b2, b3, b4] =>
     return (b1.toUInt32 <<< 24) |||
@@ -132,14 +132,14 @@ def VarInt.parser : Parser VarInt := do
 def String.serialize (s : String) := s.toUTF8.toList
 
 def String.parser (len : Nat) : Parser String := do
-  let bytes ← bytesParser len
+  let bytes ← Parser.bytes len
   let txt := bytes.toByteArray
   if h_valid : txt.IsValidUTF8
     then some (String.fromUTF8 txt h_valid)
     else none
 
 def String.parserWithProof (n : Nat) : Parser { s : String // s.utf8ByteSize = n } := do
-  let ⟨bytes, h_len⟩ ← bytesParserWithProof n
+  let ⟨bytes, h_len⟩ ← Parser.bytesWithProof n
   let txt := bytes.toByteArray
   if h_valid : txt.IsValidUTF8 then
     let s := String.fromUTF8 txt h_valid
@@ -190,7 +190,7 @@ def BinaryData.serialize (b : BinaryData) :=
 
 def BinaryData.parser : Parser BinaryData := do
   let len ← UInt16.parser
-  let ⟨l, h⟩ ← bytesParserWithProof len.toNat
+  let ⟨l, h⟩ ← Parser.bytesWithProof len.toNat
   let b := l.toArray
 
   have h_len : Coe.coe len = GetByteSize.byteSize b := by

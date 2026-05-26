@@ -1,8 +1,8 @@
 import LeanMqtt.Core.Parser.Basic
 
-theorem bytesParser_len (n : Nat) (l inp rest : List UInt8) :
-  (bytesParser n).run inp = some (l, rest) → l.length = n := by
-  simp [bytesParser]
+theorem Parser.bytes_len (n : Nat) (l inp rest : List UInt8) :
+  (Parser.bytes n).run inp = some (l, rest) → l.length = n := by
+  simp [Parser.bytes]
   split
   · intro h_len
     contradiction
@@ -14,9 +14,9 @@ theorem bytesParser_len (n : Nat) (l inp rest : List UInt8) :
     simp [List.length_take]
     omega
 
-theorem bytesParser_reconstruct (n : Nat) (input : List UInt8) (chunk rest : List UInt8) :
-  (bytesParser n).run input = some (chunk, rest) → input = chunk ++ rest := by
-  simp [bytesParser]
+theorem Parser.bytes_reconstruct (n : Nat) (input : List UInt8) (chunk rest : List UInt8) :
+  (Parser.bytes n).run input = some (chunk, rest) → input = chunk ++ rest := by
+  simp [Parser.bytes]
   split
   · intro; contradiction
   · next h_len =>
@@ -26,17 +26,17 @@ theorem bytesParser_reconstruct (n : Nat) (input : List UInt8) (chunk rest : Lis
     apply Eq.symm
     apply List.take_append_drop n input
 
-theorem roundtrip_bytes (l : List UInt8) (rest : List UInt8) :
-  (bytesParser l.length).run (l ++ rest) = some (l, rest) := by
-  simp [bytesParser]
+theorem Parser.bytes_roundtrip (l : List UInt8) (rest : List UInt8) :
+  (Parser.bytes l.length).run (l ++ rest) = some (l, rest) := by
+  simp [Parser.bytes]
   split
   · omega
   · simp
 
-theorem bytesParserWithProof_reconstruct (n : Nat) (input : List UInt8)
+theorem Parser.bytesWithProof_reconstruct (n : Nat) (input : List UInt8)
   (chunk : { l : List UInt8 // l.length = n }) (rest : List UInt8) :
-  (bytesParserWithProof n).run input = some (chunk, rest) → input = chunk.val ++ rest := by
-  simp [bytesParserWithProof]
+  (Parser.bytesWithProof n).run input = some (chunk, rest) → input = chunk.val ++ rest := by
+  simp [Parser.bytesWithProof]
   split
   · intro h
     contradiction
@@ -46,34 +46,26 @@ theorem bytesParserWithProof_reconstruct (n : Nat) (input : List UInt8)
     rw [←h_chunk, ←h_rest]
     exact (List.take_append_drop n input).symm
 
-theorem roundtrip_bytes_with_proof (l : List UInt8) (rest : List UInt8) :
-  (bytesParserWithProof l.length).run (l ++ rest) = some (⟨l, rfl⟩, rest) := by
-  simp [bytesParserWithProof]
+theorem Parser.bytesWithProof_roundtrip (l : List UInt8) (rest : List UInt8) :
+  (Parser.bytesWithProof l.length).run (l ++ rest) = some (⟨l, rfl⟩, rest) := by
+  simp [Parser.bytesWithProof]
   split
   · omega
   · simp
 
-theorem bytesParserWithProof_eq_parser_success (n : Nat)
+theorem Parser.bytes_imp_bytesWithProof (n : Nat)
   (l : List UInt8) (inp rest : List UInt8) :
-    (bytesParser n).run inp = some (l, rest) →
-    ∃ h, (bytesParserWithProof n).run inp = some (⟨l, h⟩, rest) := by
+    (Parser.bytes n).run inp = some (l, rest) →
+    ∃ h, (Parser.bytesWithProof n).run inp = some (⟨l, h⟩, rest) := by
   intro h_simple
-  have h_len_parser := bytesParser_len _ _ _ _ h_simple
-  simp only [bytesParser, bytesParserWithProof] at *
-  simp only [bind_pure_comp, StateT.run_bind, StateT.run_get,
-    Option.pure_def, Option.bind_eq_bind, Option.bind_some
-  ] at *
+  have h_len_parser := Parser.bytes_len _ _ _ _ h_simple
+  simp only [Parser.bytes, Parser.bytesWithProof] at *
+  simp at *
   split at h_simple
   · contradiction
   · next h_len =>
-    simp only [StateT.run_map, StateT.run_set, Option.pure_def,
-      Option.map_eq_map, Option.map_some, Option.some.injEq, Prod.mk.injEq
-    ] at h_simple
-    simp only [dif_neg h_len]
-    simp only [StateT.run_map, StateT.run_set, Option.pure_def,
-      Option.map_eq_map, Option.map_some, Option.some.injEq, Prod.mk.injEq,
-      Subtype.mk.injEq, exists_and_left, exists_prop
-    ]
+    simp at h_simple
+    simp [dif_neg h_len]
     rcases h_simple with ⟨h_take, h_drop⟩
     exact ⟨h_take, h_len_parser, h_drop⟩
 
