@@ -77,10 +77,11 @@ theorem bytesParserWithProof_eq_parser_success (n : Nat)
     rcases h_simple with ⟨h_take, h_drop⟩
     exact ⟨h_take, h_len_parser, h_drop⟩
 
-theorem Parser.bind_run_success {α β : Type} (p1 : Parser α) (p2 : α → Parser β)
+theorem Parser.bind_run_success
+  {α β : Type} (p1 : Parser α) (p2 : α → Parser β)
   (input rest : List UInt8) (res : β) :
-  (p1 >>= p2).run input = some (res, rest) →
-  ∃ a mid, p1.run input = some (a, mid) ∧ (p2 a).run mid = some (res, rest) := by
+    (p1 >>= p2).run input = some (res, rest) →
+    ∃ a mid, p1.run input = some (a, mid) ∧ (p2 a).run mid = some (res, rest) := by
   simp [Option.bind]
   intro h
   split at h

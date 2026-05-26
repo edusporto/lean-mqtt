@@ -362,13 +362,14 @@ theorem VarHeader.reconstruct_value
   · exact Var_Disconnect.reconstruct input v rest
   · exact Var_Auth.reconstruct input v rest
 
-theorem VarHeader.roundtrip (h : FixedHeader) (v : VarHeader h) (rest : List UInt8) :
-  (parser h).run (v.serialize h ++ rest) = some (v, rest) := by
+theorem VarHeader.roundtrip (fh : FixedHeader) (v : VarHeader fh) (rest : List UInt8) :
+  (VarHeader.parser fh).run (v.serialize fh ++ rest) = some (v, rest) := by
   simp [parser, serialize]
   simp [VarHeader.roundtrip_value v]
 
-theorem VarHeader.reconstruct (h : FixedHeader) (input : List UInt8) (v : VarHeader h) (rest : List UInt8) :
-  (parser h).run input = some (v, rest) → input = v.serialize h ++ rest := by
+theorem VarHeader.reconstruct
+  (fh : FixedHeader) (input : List UInt8) (v : VarHeader fh) (rest : List UInt8) :
+  (VarHeader.parser fh).run input = some (v, rest) → input = v.serialize fh ++ rest := by
   simp [parser, serialize]
   exact VarHeader.reconstruct_value input v rest
 

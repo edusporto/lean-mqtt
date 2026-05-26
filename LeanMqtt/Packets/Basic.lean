@@ -5,17 +5,17 @@ import LeanMqtt.Packets.Payload.Basic
 namespace Mqtt
 
 structure Header where
-  fix : FixedHeader
-  var : VarHeader fix
+  fh : FixedHeader
+  vh : VarHeader fh
 
 def Header.serialize (h : Header) : List UInt8 :=
-  FixedHeader.serialize h.fix ++
-  VarHeader.serialize h.fix h.var
+  FixedHeader.serialize h.fh ++
+  VarHeader.serialize h.fh h.vh
 
 def Header.parser : Parser Header := do
-  let fix ← FixedHeader.parser
-  let var ← VarHeader.parser fix
-  return { fix, var }
+  let fh ← FixedHeader.parser
+  let vh ← VarHeader.parser fh
+  return { fh, vh }
 
 structure Packet where
   fixed_header : FixedHeader

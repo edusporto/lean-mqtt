@@ -12,8 +12,8 @@ open Mqtt
   Determines the Variable Header type based on the Packet Kind
   and the specific flags (needed for Publish QoS).
 -/
-def VarHeader.getType (k : PktKind) (f : PktFlags k) : Type :=
-  match k, f with
+def VarHeader.getType (kind : PktKind) (flags : PktFlags kind) : Type :=
+  match kind, flags with
   | .connect, _     => Var_Connect
   | .connack, _     => Var_Connack
   | .publish, f     => Var_Publish f.qos
@@ -30,28 +30,30 @@ def VarHeader.getType (k : PktKind) (f : PktFlags k) : Type :=
   | .disconnect, _  => Var_Disconnect
   | .auth, _        => Var_Auth
 
-def VarHeader.serializeValue {k : PktKind} {f : PktFlags k}
-  (v : VarHeader.getType k f) : List UInt8 :=
-  match k, f with
-  | .connect, _     => Var_Connect.serialize v
-  | .connack, _     => Var_Connack.serialize v
-  | .publish, f     => @Var_Publish.serialize f.qos v
-  | .puback, _      => Var_Puback.serialize v
-  | .pubrec, _      => Var_Pubrec.serialize v
-  | .pubrel, _      => Var_Pubrel.serialize v
-  | .pubcomp, _     => Var_Pubcomp.serialize v
-  | .subscribe, _   => Var_Subscribe.serialize v
-  | .suback, _      => Var_Suback.serialize v
-  | .unsubscribe, _ => Var_Unsubscribe.serialize v
-  | .unsuback, _    => Var_Unsuback.serialize v
-  | .pingreq, _     => Var_Pingreq.serialize v
-  | .pingresp, _    => Var_Pingresp.serialize v
-  | .disconnect, _  => Var_Disconnect.serialize v
-  | .auth, _        => Var_Auth.serialize v
+def VarHeader.serializeValue
+  {kind : PktKind} {flags : PktFlags kind}
+  (value : VarHeader.getType kind flags) : List UInt8 :=
+  match kind, flags with
+  | .connect, _     => Var_Connect.serialize value
+  | .connack, _     => Var_Connack.serialize value
+  | .publish, f     => @Var_Publish.serialize f.qos value
+  | .puback, _      => Var_Puback.serialize value
+  | .pubrec, _      => Var_Pubrec.serialize value
+  | .pubrel, _      => Var_Pubrel.serialize value
+  | .pubcomp, _     => Var_Pubcomp.serialize value
+  | .subscribe, _   => Var_Subscribe.serialize value
+  | .suback, _      => Var_Suback.serialize value
+  | .unsubscribe, _ => Var_Unsubscribe.serialize value
+  | .unsuback, _    => Var_Unsuback.serialize value
+  | .pingreq, _     => Var_Pingreq.serialize value
+  | .pingresp, _    => Var_Pingresp.serialize value
+  | .disconnect, _  => Var_Disconnect.serialize value
+  | .auth, _        => Var_Auth.serialize value
 
 def VarHeader.parserValue
-  (k : PktKind) (f : PktFlags k) : Parser (VarHeader.getType k f) :=
-  match k, f with
+  (kind : PktKind) (flags : PktFlags kind)
+  : Parser (VarHeader.getType kind flags) :=
+  match kind, flags with
   | .connect, _     => Var_Connect.parser
   | .connack, _     => Var_Connack.parser
   | .publish, f     => Var_Publish.parser f.qos
@@ -68,13 +70,13 @@ def VarHeader.parserValue
   | .disconnect, _  => Var_Disconnect.parser
   | .auth, _        => Var_Auth.parser
 
-abbrev VarHeader (h : FixedHeader) : Type :=
-  VarHeader.getType h.kind h.flags
+abbrev VarHeader (fh : FixedHeader) : Type :=
+  VarHeader.getType fh.kind fh.flags
 
-def VarHeader.serialize (h : FixedHeader) (v : VarHeader h) : List UInt8 :=
-  VarHeader.serializeValue v
+def VarHeader.serialize (fh : FixedHeader) (vh : VarHeader fh) : List UInt8 :=
+  VarHeader.serializeValue vh
 
-def VarHeader.parser (h : FixedHeader) : Parser (VarHeader h) :=
-  VarHeader.parserValue h.kind h.flags
+def VarHeader.parser (fh : FixedHeader) : Parser (VarHeader fh) :=
+  VarHeader.parserValue fh.kind fh.flags
 
 end Mqtt
