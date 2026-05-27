@@ -28,13 +28,13 @@ theorem PktFlags.encode_decode (k : PktKind) (f : PktFlags k) :
     simp [encode, decode?, hval]
   }
 
-theorem PktKind.decode_eq_encode (b : BitVec 4) (k : PktKind) :
+theorem PktKind.decode_eq_encode {b : BitVec 4} {k : PktKind} :
     PktKind.decode? b = some k → b = k.encode := by
   intro h
   unfold PktKind.decode? at h
   split at h <;> cases h <;> rfl
 
-theorem PktFlags.decode_eq_encode (k : PktKind) (b : BitVec 4) (f : PktFlags k) :
+theorem PktFlags.decode_eq_encode {k : PktKind} {b : BitVec 4} {f : PktFlags k} :
     PktFlags.decode? k b = some f → b = PktFlags.encode k f := by
   intro h
 
@@ -55,7 +55,7 @@ theorem PktFlags.decode_eq_encode (k : PktKind) (b : BitVec 4) (f : PktFlags k) 
     · contradiction
   }
 
-theorem FixedHeader.roundtrip (header : FixedHeader) (rest : List UInt8) :
+theorem FixedHeader.roundtrip (header : FixedHeader) {rest : List UInt8} :
     FixedHeader.parser.run (header.serialize ++ rest) = some (header, rest) := by
 
   simp [FixedHeader.parser, FixedHeader.serialize, UInt8.parser]
@@ -75,8 +75,9 @@ theorem FixedHeader.roundtrip (header : FixedHeader) (rest : List UInt8) :
   rw [VarInt.roundtrip]
   simp
 
-theorem FixedHeader.reconstruct (input : List UInt8) (header : FixedHeader) (rest : List UInt8) :
-    FixedHeader.parser.run input = some (header, rest) → input = header.serialize ++ rest := by
+theorem FixedHeader.reconstruct {header : FixedHeader} {input rest : List UInt8} :
+    FixedHeader.parser.run input = some (header, rest) →
+    input = header.serialize ++ rest := by
 
   simp only [FixedHeader.parser, FixedHeader.serialize]
   intro h
@@ -103,10 +104,10 @@ theorem FixedHeader.reconstruct (input : List UInt8) (header : FixedHeader) (res
   subst h_mid2 h_mid3
 
   -- Gather reconstruction truths
-  have h_rec_byte := UInt8.reconstruct _ _ _ h_byte
-  have h_rec_size := VarInt.reconstruct _ _ _ h_size
-  have h_k_eq := PktKind.decode_eq_encode _ _ h_k_opt
-  have h_f_eq := PktFlags.decode_eq_encode _ _ _ h_f_opt
+  have h_rec_byte := UInt8.reconstruct h_byte
+  have h_rec_size := VarInt.reconstruct h_size
+  have h_k_eq := PktKind.decode_eq_encode h_k_opt
+  have h_f_eq := PktFlags.decode_eq_encode h_f_opt
 
   rw [h_rec_byte, h_rec_size]
   simp only [UInt8.serialize, List.append_assoc]

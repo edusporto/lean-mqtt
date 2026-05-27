@@ -9,12 +9,12 @@ import LeanMqtt.Primitives.SizedList.Proofs
 namespace Mqtt
 open Mqtt
 
-theorem Properties.roundtrip (ps : Properties) (rest : List UInt8) :
-    Properties.parser.run (ps.serialize ++ rest) = some (ps, rest) := by
-  exact SizedList.roundtrip ps rest
+theorem Properties.roundtrip (ps : Properties) {rest : List UInt8} :
+    Properties.parser.run (ps.serialize ++ rest) = some (ps, rest) :=
+  SizedList.roundtrip ps
 
 theorem Properties.reconstruct
-    (input : List UInt8) (ps : Properties) (rest : List UInt8) :
+    {ps : Properties} {input rest : List UInt8} :
     Properties.parser.run input = some (ps, rest) →
     input = ps.serialize ++ rest :=
-  SizedList.reconstruct input ps rest
+  SizedList.reconstruct

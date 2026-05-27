@@ -22,31 +22,20 @@ instance instGetByteSizeList {α : Type} [GetByteSize α] : GetByteSize (List α
 
 /- ============================== ChunkItem ================================ -/
 /--
-  A typeclass bundling a parser and serializer for `α`, along with the proofs
-  required to safely parse it inside a bounded loop.
+  A typeclass bundling the proofs required to safely parse a chunk inside a bounded loop.
 -/
-class ChunkItem (α : Type) [GetByteSize α] where
-  parser : Parser α
-  serialize : α → List UInt8
-
-  -- Size properties
+class ChunkItem (α : Type) [GetByteSize α] [c : Codec α] where
+  -- Size properties to ensure correctness and termination
   h_pos : ∀ (a : α), 0 < GetByteSize.byteSize a
-  h_consumed : ∀ (input : List UInt8) (a : α) (rest : List UInt8),
-    parser.run input = some (a, rest) → input.length = GetByteSize.byteSize a + rest.length
-
-  -- Correctness property
-  roundtrip : ∀ (a : α) (rest : List UInt8),
-    parser.run (serialize a ++ rest) = some (a, rest)
-  -- Soundness property
-  reconstruct : ∀ (input : List UInt8) (a : α) (rest : List UInt8),
-    parser.run input = some (a, rest) → input = serialize a ++ rest
+  h_consumed : ∀ {a : α} {input rest : List UInt8},
+    c.parser.run input = some (a, rest) → input.length = GetByteSize.byteSize a + rest.length
 
 /--
   Recursively parses items of type `α` from a bounded sequence of bytes.
   Returns the list of parsed items along with a proof that the sum of their
   byte sizes exactly matches the original length of the input.
 -/
-def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [ChunkItem α]
+def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [Codec α] [ChunkItem α]
   (input : List UInt8) :
   Option { ps : List α // input.length = (ps.map GetByteSize.byteSize).sum } :=
   if h_empty : input.isEmpty then
@@ -55,13 +44,13 @@ def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [ChunkItem α]
       simp [h_len_zero]
     ⟩
   else
-    match h_parse : (ChunkItem.parser : Parser α).run input with
+    match h_parse : (Codec.parser : Parser α).run input with
     | some (item, rest) =>
       match parseChunkLoop rest with
       | some ⟨tail, h_tail_len⟩ =>
         let h_len_ps : input.length = ((item :: tail).map GetByteSize.byteSize).sum := by
           have h_c : input.length = GetByteSize.byteSize item + rest.length :=
-            ChunkItem.h_consumed input item rest h_parse
+            ChunkItem.h_consumed h_parse
           rw [h_tail_len] at h_c
           exact h_c
 
@@ -70,7 +59,7 @@ def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [ChunkItem α]
     | none => none
 termination_by input.length
 decreasing_by
-  have h_c := ChunkItem.h_consumed input item rest h_parse
+  have h_c := ChunkItem.h_consumed h_parse
   have h_p := ChunkItem.h_pos item
   omega
 
@@ -88,16 +77,16 @@ abbrev SizedList (α lenTyp : Type) [GetByteSize α] [Coe lenTyp Nat] :=
   and `ChunkItem` for the elements.
 -/
 def SizedList.serialize {α lenTyp : Type}
-  [GetByteSize α] [Coe lenTyp Nat] [ChunkItem α] [Codec lenTyp]
+  [GetByteSize α] [Coe lenTyp Nat] [Codec α] [ChunkItem α] [Codec lenTyp]
   (sl : SizedList α lenTyp) : List UInt8 :=
 
-  Codec.serialize sl.len.val ++ sl.val.flatMap ChunkItem.serialize
+  Codec.serialize sl.len.val ++ sl.val.flatMap Codec.serialize
 
 /--
   Parses a `SizedList` with a `Codec` length prefix and `ChunkItem` elements
 -/
 def SizedList.parser {α lenTyp : Type}
-  [GetByteSize α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp] :
+  [GetByteSize α] [Codec α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp] :
   Parser (SizedList α lenTyp) := do
 
   let len : lenTyp ← Codec.parser
