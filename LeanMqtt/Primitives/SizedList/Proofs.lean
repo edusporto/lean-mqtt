@@ -146,7 +146,7 @@ theorem SizedList.roundtrip {α lenTyp : Type}
   -- Bypass dependent type shenanigans on the byte parser
   have h_simple := Parser.bytes_roundtrip (sl.val.flatMap ChunkItem.serialize) rest
   rw [←h_len_eq] at h_simple
-  have ⟨_, h_dep⟩ := Parser.bytes_imp_bytesWithProof _ _ _ _ h_simple
+  have ⟨_, h_dep⟩ := Parser.bytes_imp_bytesWithProof h_simple
 
   rw [h_dep]
   simp
@@ -178,7 +178,7 @@ theorem SizedList.reconstruct {α lenTyp : Type}
     subst h_rest
 
     have h_rec_len   := Codec.reconstruct _ _ _ h_len
-    have h_rec_chunk := Parser.bytesWithProof_reconstruct _ _ _ _ h_chunk
+    have h_rec_chunk := Parser.bytesWithProof_reconstruct h_chunk
     have h_rec_loop  :=
       ChunkItem.parseChunkLoop_reconstruct chunk.val items h_loop_len h_match
 

@@ -56,7 +56,7 @@ theorem UInt16.reconstruct (input : List UInt8) (n : UInt16) (rest : List UInt8)
     obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next
     subst h_n h_rest
 
-    have h_rec := Parser.bytes_reconstruct _ _ _ _ h_bytes
+    have h_rec := Parser.bytes_reconstruct h_bytes
     rw [h_rec]
 
     simp
@@ -88,7 +88,7 @@ theorem UInt32.reconstruct (input : List UInt8) (n : UInt32) (rest : List UInt8)
     obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next
     subst h_n h_rest
 
-    have h_rec := Parser.bytes_reconstruct _ _ _ _ h_bytes
+    have h_rec := Parser.bytes_reconstruct h_bytes
     rw [h_rec]
 
     simp
@@ -115,7 +115,7 @@ theorem String.parser_len (len : Nat) (s : String) (inp rest : List UInt8) :
     split at h
     · next h_valid =>
       simp at h
-      have h_len := Parser.bytes_len _ _ _ _ h_parse
+      have h_len := Parser.bytes_len h_parse
       rw [←h.1]
       simp only [String.fromUTF8, String.utf8ByteSize_ofByteArray, List.size_toByteArray]
       exact h_len
@@ -172,7 +172,7 @@ theorem String.reconstructWithProof (len : Nat) (input : List UInt8)
     obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success h_next
     subst h_rest
 
-    have h_rec := Parser.bytesWithProof_reconstruct _ _ _ _ h_bytes
+    have h_rec := Parser.bytesWithProof_reconstruct h_bytes
     rw [h_rec, h_s]
 
     simp [String.fromUTF8, String.toUTF8_eq_toByteArray, Helpers.list_bytearray_roundtrip]
@@ -199,7 +199,7 @@ theorem String.parserWithProof_eq_parser_success (n : Nat) (inp : List UInt8)
       -- If simple parser succeeded, bytesParserWithProof must succeed too
       -- We construct the proof needed for the dependent parser
       simp at h_simple
-      have ⟨h_len, h_parsed⟩ := Parser.bytes_imp_bytesWithProof _ _ _ _ h_bytes
+      have ⟨h_len, h_parsed⟩ := Parser.bytes_imp_bytesWithProof h_bytes
       rw [h_parsed]
       simp [h_utf8]
       repeat' constructor
@@ -298,7 +298,7 @@ theorem BinaryData.roundtrip (b : BinaryData) (rest : List UInt8) :
   -/
   have h_simple := Parser.bytes_roundtrip b.val.toList rest
   rw [←h_len_eq] at h_simple
-  have ⟨_, h_dep⟩ := Parser.bytes_imp_bytesWithProof _ _ _ _ h_simple
+  have ⟨_, h_dep⟩ := Parser.bytes_imp_bytesWithProof h_simple
 
   rw [h_dep]
 
@@ -314,7 +314,7 @@ theorem BinaryData.reconstruct (input : List UInt8) (b : BinaryData) (rest : Lis
 
   subst h_rest
   have h_rec_len := UInt16.reconstruct _ _ _ h_len
-  have h_rec_bytes := Parser.bytesWithProof_reconstruct _ _ _ _ h_bytes
+  have h_rec_bytes := Parser.bytesWithProof_reconstruct h_bytes
 
   rw [h_rec_len, h_rec_bytes, h_b]
   simp [List.append_assoc]

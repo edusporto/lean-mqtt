@@ -1,7 +1,7 @@
 import LeanMqtt.Core.Parser.Basic
 
-theorem Parser.bytes_len (n : Nat) (l inp rest : List UInt8) :
-    (Parser.bytes n).run inp = some (l, rest) → l.length = n := by
+theorem Parser.bytes_len {n : Nat} {input l rest : List UInt8} :
+    (Parser.bytes n).run input = some (l, rest) → l.length = n := by
   simp [Parser.bytes]
   split
   · intro h_len
@@ -14,7 +14,7 @@ theorem Parser.bytes_len (n : Nat) (l inp rest : List UInt8) :
     simp [List.length_take]
     omega
 
-theorem Parser.bytes_reconstruct (n : Nat) (input chunk rest : List UInt8) :
+theorem Parser.bytes_reconstruct {n : Nat} {input chunk rest : List UInt8} :
     (Parser.bytes n).run input = some (chunk, rest) → input = chunk ++ rest := by
   simp [Parser.bytes]
   split
@@ -26,15 +26,15 @@ theorem Parser.bytes_reconstruct (n : Nat) (input chunk rest : List UInt8) :
     rw [← h1, ← h2]
     apply (List.take_append_drop n input).symm
 
-theorem Parser.bytes_roundtrip (l rest : List UInt8) :
+theorem Parser.bytes_roundtrip (l rest : List UInt8):
     (Parser.bytes l.length).run (l ++ rest) = some (l, rest) := by
   simp [Parser.bytes]
   split
   · omega
   · simp
 
-theorem Parser.bytesWithProof_reconstruct (n : Nat) (input : List UInt8)
-    (chunk : { l : List UInt8 // l.length = n }) (rest : List UInt8) :
+theorem Parser.bytesWithProof_reconstruct {n : Nat} {input : List UInt8}
+    {chunk : { l : List UInt8 // l.length = n }} {rest : List UInt8} :
     (Parser.bytesWithProof n).run input = some (chunk, rest) →
     input = chunk.val ++ rest := by
   simp [Parser.bytesWithProof]
@@ -54,11 +54,11 @@ theorem Parser.bytesWithProof_roundtrip (l rest : List UInt8) :
   · omega
   · simp
 
-theorem Parser.bytes_imp_bytesWithProof (n : Nat) (l inp rest : List UInt8) :
+theorem Parser.bytes_imp_bytesWithProof {n : Nat} {l inp rest : List UInt8} :
     (Parser.bytes n).run inp = some (l, rest) →
     ∃ h, (Parser.bytesWithProof n).run inp = some (⟨l, h⟩, rest) := by
   intro h_simple
-  have h_len_parser := Parser.bytes_len _ _ _ _ h_simple
+  have h_len_parser := Parser.bytes_len h_simple
   simp only [Parser.bytes, Parser.bytesWithProof] at *
   simp at *
   split at h_simple
