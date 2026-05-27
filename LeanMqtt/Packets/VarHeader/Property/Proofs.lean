@@ -46,9 +46,9 @@ theorem Property.reconstruct (input : List UInt8) (p : Property) (rest : List UI
   simp only [Property.parser, Property.serialize]
   intro h
 
-  obtain ⟨id, mid, h_id, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨val, mid2, h_val, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next
-  obtain ⟨h_p, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next2
+  obtain ⟨id, mid, h_id, h_next⟩ := Parser.bind_run_success h
+  obtain ⟨val, mid2, h_val, h_next2⟩ := Parser.bind_run_success h_next
+  obtain ⟨h_p, h_rest⟩ := Parser.pure_run_success h_next2
 
   subst h_rest
   have h_rec_id := VarInt.reconstruct _ _ _ h_id

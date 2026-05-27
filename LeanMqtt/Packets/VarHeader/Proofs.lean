@@ -17,11 +17,11 @@ theorem Var_Connect.reconstruct
     Var_Connect.parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨p_name, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨p_ver, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨c_flags, m3, h5, h6⟩ := Parser.bind_run_success _ _ _ _ _ h4
-  obtain ⟨props, m4, h7, h8⟩ := Parser.bind_run_success _ _ _ _ _ h6
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h8
+  obtain ⟨p_name, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨p_ver, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨c_flags, m3, h5, h6⟩ := Parser.bind_run_success h4
+  obtain ⟨props, m4, h7, h8⟩ := Parser.bind_run_success h6
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h8
   subst h_rest h_v
   rw [Str.reconstruct _ _ _ h1,
     UInt8.reconstruct _ _ _ h3,
@@ -38,10 +38,10 @@ theorem Var_Connack.reconstruct (input : List UInt8) (v : Var_Connack) (rest : L
     Var_Connack.parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨ack_flags, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success _ _ _ _ _ h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h6
+  obtain ⟨ack_flags, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
   subst h_rest h_v
   rw [UInt8.reconstruct _ _ _ h1,
     UInt8.reconstruct _ _ _ h3,
@@ -80,25 +80,25 @@ theorem Var_Publish.reconstruct {qos : QoSBits} (input : List UInt8) (v : Var_Pu
   simp only [Var_Publish.parser, Var_Publish.serialize]
   intro h
 
-  obtain ⟨topic, m1, h_topic, h_next1⟩ := Parser.bind_run_success _ _ _ _ _ h
+  obtain ⟨topic, m1, h_topic, h_next1⟩ := Parser.bind_run_success h
 
   revert h_next1
   split
   · next h_qos_pos =>
     intro h_next1
     -- Extract UInt16.parser as a black box
-    obtain ⟨pid, m2, h_pid, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next1
+    obtain ⟨pid, m2, h_pid, h_next2⟩ := Parser.bind_run_success h_next1
 
     -- Extract the `let y ← pure (cast ...)` statement
-    obtain ⟨pid_cast, m2_mid, h_pure_cast, h_next3⟩ := Parser.bind_run_success _ _ _ _ _ h_next2
-    obtain ⟨h_cast_eq, h_m2_eq⟩ := Parser.pure_run_success _ _ _ _ h_pure_cast
+    obtain ⟨pid_cast, m2_mid, h_pure_cast, h_next3⟩ := Parser.bind_run_success h_next2
+    obtain ⟨h_cast_eq, h_m2_eq⟩ := Parser.pure_run_success h_pure_cast
     subst h_m2_eq h_cast_eq
 
     -- Extract Properties.parser
-    obtain ⟨props, m3, h_props, h_pure⟩ := Parser.bind_run_success _ _ _ _ _ h_next3
+    obtain ⟨props, m3, h_props, h_pure⟩ := Parser.bind_run_success h_next3
 
     -- Extract final pure return
-    obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_pure
+    obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h_pure
     subst h_rest h_v
 
     -- Apply reconstruction helpers
@@ -109,15 +109,15 @@ theorem Var_Publish.reconstruct {qos : QoSBits} (input : List UInt8) (v : Var_Pu
     intro h_next1
 
     -- Extract the `let y ← pure (cast ...)` statement
-    obtain ⟨pid_cast, m2, h_pure_cast, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next1
-    obtain ⟨h_cast_eq, h_m2_eq⟩ := Parser.pure_run_success _ _ _ _ h_pure_cast
+    obtain ⟨pid_cast, m2, h_pure_cast, h_next2⟩ := Parser.bind_run_success h_next1
+    obtain ⟨h_cast_eq, h_m2_eq⟩ := Parser.pure_run_success h_pure_cast
     subst h_m2_eq h_cast_eq
 
     -- Extract Properties.parser
-    obtain ⟨props, m3, h_props, h_pure⟩ := Parser.bind_run_success _ _ _ _ _ h_next2
+    obtain ⟨props, m3, h_props, h_pure⟩ := Parser.bind_run_success h_next2
 
     -- Extract final pure return
-    obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_pure
+    obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h_pure
     subst h_rest h_v
 
     -- Apply reconstruction helpers
@@ -133,14 +133,14 @@ theorem Var_Puback.reconstruct (input : List UInt8) (v : Var_Puback) (rest : Lis
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success _ _ _ _ _ h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h6
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
   subst h_rest h_v
-  rw [UInt16.reconstruct _ _ _
-    h1, UInt8.reconstruct _ _ _ h3,
-    Properties.reconstruct _ _ _ h5]
+  rw [UInt16.reconstruct _ _ _ h1,
+      UInt8.reconstruct _ _ _ h3,
+      Properties.reconstruct _ _ _ h5]
   simp only [List.append_assoc]
 
 theorem Var_Pubrec.roundtrip (v : Var_Pubrec) (rest : List UInt8) :
@@ -152,10 +152,10 @@ theorem Var_Pubrec.reconstruct (input : List UInt8) (v : Var_Pubrec) (rest : Lis
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success _ _ _ _ _ h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h6
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1,
     UInt8.reconstruct _ _ _ h3,
@@ -171,10 +171,10 @@ theorem Var_Pubrel.reconstruct (input : List UInt8) (v : Var_Pubrel) (rest : Lis
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success _ _ _ _ _ h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h6
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1,
     UInt8.reconstruct _ _ _ h3,
@@ -190,10 +190,10 @@ theorem Var_Pubcomp.reconstruct (input : List UInt8) (v : Var_Pubcomp) (rest : L
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success _ _ _ _ _ h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h6
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1,
     UInt8.reconstruct _ _ _ h3,
@@ -209,9 +209,9 @@ theorem Var_Subscribe.reconstruct (input : List UInt8) (v : Var_Subscribe) (rest
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h4
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1, Properties.reconstruct _ _ _ h3]
   simp only [List.append_assoc]
@@ -225,9 +225,9 @@ theorem Var_Suback.reconstruct (input : List UInt8) (v : Var_Suback) (rest : Lis
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h4
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1, Properties.reconstruct _ _ _ h3]
   simp only [List.append_assoc]
@@ -241,9 +241,9 @@ theorem Var_Unsubscribe.reconstruct (input : List UInt8) (v : Var_Unsubscribe) (
   parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h4
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1, Properties.reconstruct _ _ _ h3]
   simp only [List.append_assoc]
@@ -257,9 +257,9 @@ theorem Var_Unsuback.reconstruct (input : List UInt8) (v : Var_Unsuback) (rest :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h4
+  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
   subst h_rest h_v
   rw [UInt16.reconstruct _ _ _ h1, Properties.reconstruct _ _ _ h3]
   simp only [List.append_assoc]
@@ -272,7 +272,7 @@ theorem Var_Pingreq.roundtrip (v : Var_Pingreq) (rest : List UInt8) :
   parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h
   subst h_rest h_v
   rfl
 
@@ -284,7 +284,7 @@ theorem Var_Pingresp.reconstruct (input : List UInt8) (v : Var_Pingresp) (rest :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h
   subst h_rest h_v
   rfl
 
@@ -297,9 +297,9 @@ theorem Var_Disconnect.reconstruct (input : List UInt8) (v : Var_Disconnect) (re
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨rcode, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h4
+  obtain ⟨rcode, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
   subst h_rest h_v
   rw [UInt8.reconstruct _ _ _ h1, Properties.reconstruct _ _ _ h3]
   simp only [List.append_assoc]
@@ -313,9 +313,9 @@ theorem Var_Auth.reconstruct (input : List UInt8) (v : Var_Auth) (rest : List UI
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨rcode, m1, h1, h2⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success _ _ _ _ _ h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success _ _ _ _ h4
+  obtain ⟨rcode, m1, h1, h2⟩ := Parser.bind_run_success h
+  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
+  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
   subst h_rest h_v
   rw [UInt8.reconstruct _ _ _ h1, Properties.reconstruct _ _ _ h3]
   simp only [List.append_assoc]

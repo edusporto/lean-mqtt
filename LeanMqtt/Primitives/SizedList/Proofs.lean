@@ -165,16 +165,16 @@ theorem SizedList.reconstruct {α lenTyp : Type}
   simp only [SizedList.parser, SizedList.serialize]
   intro h
 
-  obtain ⟨len, mid1, h_len, h_next1⟩ := Parser.bind_run_success _ _ _ _ _ h
+  obtain ⟨len, mid1, h_len, h_next1⟩ := Parser.bind_run_success h
 
-  obtain ⟨chunk, mid2, h_chunk, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next1
+  obtain ⟨chunk, mid2, h_chunk, h_next2⟩ := Parser.bind_run_success h_next1
 
   revert h_next2
   split
   · next items h_loop_len h_match =>
     intro h_next2
 
-    obtain ⟨h_sl, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next2
+    obtain ⟨h_sl, h_rest⟩ := Parser.pure_run_success h_next2
     subst h_rest
 
     have h_rec_len   := Codec.reconstruct _ _ _ h_len

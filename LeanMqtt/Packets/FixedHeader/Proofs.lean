@@ -82,13 +82,13 @@ theorem FixedHeader.reconstruct (input : List UInt8) (header : FixedHeader) (res
   intro h
 
   -- Linearly extract every single parsed line from the `do` block
-  obtain ⟨byte, mid1, h_byte, h_next1⟩   := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨kind, mid2, h_kind, h_next2⟩   := Parser.bind_run_success _ _ _ _ _ h_next1
-  obtain ⟨flags, mid3, h_flags, h_next3⟩ := Parser.bind_run_success _ _ _ _ _ h_next2
-  obtain ⟨size, mid4, h_size, h_pure⟩    := Parser.bind_run_success _ _ _ _ _ h_next3
+  obtain ⟨byte, mid1, h_byte, h_next1⟩   := Parser.bind_run_success h
+  obtain ⟨kind, mid2, h_kind, h_next2⟩   := Parser.bind_run_success h_next1
+  obtain ⟨flags, mid3, h_flags, h_next3⟩ := Parser.bind_run_success h_next2
+  obtain ⟨size, mid4, h_size, h_pure⟩    := Parser.bind_run_success h_next3
 
   -- Extract the pure return and align our goal
-  obtain ⟨h_header, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_pure
+  obtain ⟨h_header, h_rest⟩ := Parser.pure_run_success h_pure
   subst h_rest
 
   -- Use forward rewrite, or `subst` to replace `header` everywhere
@@ -97,8 +97,9 @@ theorem FixedHeader.reconstruct (input : List UInt8) (header : FixedHeader) (res
   -- Unpack the lifted options.
   -- This proves that the state didn't move (mid1 = mid2 = mid3) and
   -- gives us the raw Option truths.
-  obtain ⟨h_k_opt, h_mid2⟩ := Parser.liftM_run_success _ _ _ _ h_kind
-  obtain ⟨h_f_opt, h_mid3⟩ := Parser.liftM_run_success _ _ _ _ h_flags
+
+  obtain ⟨h_k_opt, h_mid2⟩ := Parser.liftM_run_success h_kind
+  obtain ⟨h_f_opt, h_mid3⟩ := Parser.liftM_run_success h_flags
   subst h_mid2 h_mid3
 
   -- Gather reconstruction truths

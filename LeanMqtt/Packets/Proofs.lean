@@ -16,10 +16,10 @@ theorem Header.reconstruct (input : List UInt8) (h : Header) (rest : List UInt8)
   simp only [parser, serialize]
   intro h_run
 
-  obtain ⟨fix, m1, h_fix, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h_run
-  obtain ⟨var, m2, h_var, h_pure⟩ := Parser.bind_run_success _ _ _ _ _ h_next
+  obtain ⟨fix, m1, h_fix, h_next⟩ := Parser.bind_run_success h_run
+  obtain ⟨var, m2, h_var, h_pure⟩ := Parser.bind_run_success h_next
 
-  obtain ⟨h_eq, h_rest_eq⟩ := Parser.pure_run_success _ _ _ _ h_pure
+  obtain ⟨h_eq, h_rest_eq⟩ := Parser.pure_run_success h_pure
   subst h_rest_eq
 
   cases h_eq

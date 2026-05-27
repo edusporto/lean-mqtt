@@ -48,12 +48,12 @@ theorem UInt16.reconstruct (input : List UInt8) (n : UInt16) (rest : List UInt8)
   simp only [UInt16.parser, UInt16.serialize]
   intro h
 
-  obtain ⟨bytes, mid, h_bytes, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h
+  obtain ⟨bytes, mid, h_bytes, h_next⟩ := Parser.bind_run_success h
 
   split at h_next
   · next _ b1 b2 =>
 
-    obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next
+    obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next
     subst h_n h_rest
 
     have h_rec := Parser.bytes_reconstruct _ _ _ _ h_bytes
@@ -81,11 +81,11 @@ theorem UInt32.reconstruct (input : List UInt8) (n : UInt32) (rest : List UInt8)
   simp only [UInt32.parser, UInt32.serialize]
   intro h
 
-  obtain ⟨bytes, mid, h_bytes, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h
+  obtain ⟨bytes, mid, h_bytes, h_next⟩ := Parser.bind_run_success h
 
   split at h_next
   · next _ b1 b2 b3 b4 =>
-    obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next
+    obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next
     subst h_n h_rest
 
     have h_rec := Parser.bytes_reconstruct _ _ _ _ h_bytes
@@ -165,11 +165,11 @@ theorem String.reconstructWithProof (len : Nat) (input : List UInt8)
 
   simp only [String.parserWithProof, String.serialize]
   intro h
-  obtain ⟨bytes_val, mid, h_bytes, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h
+  obtain ⟨bytes_val, mid, h_bytes, h_next⟩ := Parser.bind_run_success h
 
   split at h_next
   · next h_valid =>
-    obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next
+    obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success h_next
     subst h_rest
 
     have h_rec := Parser.bytesWithProof_reconstruct _ _ _ _ h_bytes
@@ -246,9 +246,9 @@ theorem Str.reconstruct (input : List UInt8) (s : Str) (rest : List UInt8) :
   simp only [Str.parser, Str.serialize]
   intro h
 
-  obtain ⟨len, mid, h_len, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨str_val, mid2, h_str, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next
-  obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next2
+  obtain ⟨len, mid, h_len, h_next⟩ := Parser.bind_run_success h
+  obtain ⟨str_val, mid2, h_str, h_next2⟩ := Parser.bind_run_success h_next
+  obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success h_next2
 
   subst h_rest
   have h_rec_len := UInt16.reconstruct _ _ _ h_len
@@ -267,10 +267,10 @@ theorem StrPair.reconstruct (input : List UInt8) (p : StrPair) (rest : List UInt
   simp only [StrPair.parser, StrPair.serialize]
   intro h
 
-  obtain ⟨s1, mid1, h_s1, h_next1⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨s2, mid2, h_s2, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next1
+  obtain ⟨s1, mid1, h_s1, h_next1⟩ := Parser.bind_run_success h
+  obtain ⟨s2, mid2, h_s2, h_next2⟩ := Parser.bind_run_success h_next1
 
-  obtain ⟨h_p, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next2
+  obtain ⟨h_p, h_rest⟩ := Parser.pure_run_success h_next2
   subst h_p h_rest
 
   have rec1 := Str.reconstruct input s1 mid1 h_s1
@@ -308,9 +308,9 @@ theorem BinaryData.reconstruct (input : List UInt8) (b : BinaryData) (rest : Lis
   simp only [BinaryData.parser, BinaryData.serialize]
   intro h
 
-  obtain ⟨len, mid, h_len, h_next⟩ := Parser.bind_run_success _ _ _ _ _ h
-  obtain ⟨bytes_val, mid2, h_bytes, h_next2⟩ := Parser.bind_run_success _ _ _ _ _ h_next
-  obtain ⟨h_b, h_rest⟩ := Parser.pure_run_success _ _ _ _ h_next2
+  obtain ⟨len, mid, h_len, h_next⟩ := Parser.bind_run_success h
+  obtain ⟨bytes_val, mid2, h_bytes, h_next2⟩ := Parser.bind_run_success h_next
+  obtain ⟨h_b, h_rest⟩ := Parser.pure_run_success h_next2
 
   subst h_rest
   have h_rec_len := UInt16.reconstruct _ _ _ h_len
