@@ -36,10 +36,7 @@ theorem UInt16.parser_len (n : UInt16) :
 
 theorem UInt16.roundtrip (n : UInt16) {rest : List UInt8} :
     UInt16.parser.run (n.serialize ++ rest) = some (n, rest) := by
-  simp [UInt16.parser]
-  rw [←UInt16.parser_len n]
-  rw [Parser.bytes_roundtrip _ _]
-  simp [UInt16.serialize]
+  simp [UInt16.parser, UInt16.serialize, UInt8.parser]
   bv_decide
 
 theorem UInt16.reconstruct {n : UInt16} {input rest : List UInt8} :
@@ -48,20 +45,18 @@ theorem UInt16.reconstruct {n : UInt16} {input rest : List UInt8} :
   simp only [UInt16.parser, UInt16.serialize]
   intro h
 
-  obtain ⟨bytes, mid, h_bytes, h_next⟩ := Parser.bind_run_success h
+  obtain ⟨b1, mid, h_b1, h_next1⟩ := Parser.bind_run_success h
+  obtain ⟨b2, mid2, h_b2, h_next2⟩ := Parser.bind_run_success h_next1
+  obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next2
 
-  split at h_next
-  · next _ b1 b2 =>
+  subst h_rest h_n
 
-    obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next
-    subst h_n h_rest
+  have h_rec1 := UInt8.reconstruct h_b1
+  have h_rec2 := UInt8.reconstruct h_b2
 
-    have h_rec := Parser.bytes_reconstruct h_bytes
-    rw [h_rec]
-
-    simp
-    exact ⟨by bv_decide, by bv_decide⟩
-  · contradiction
+  rw [h_rec1, h_rec2]
+  simp [UInt8.serialize, List.cons_append, List.nil_append]
+  bv_decide
 
 theorem UInt32.parser_len (n : UInt32) :
     n.serialize.length = 4 := by
@@ -69,10 +64,7 @@ theorem UInt32.parser_len (n : UInt32) :
 
 theorem UInt32.roundtrip (n : UInt32) {rest : List UInt8} :
     UInt32.parser.run (n.serialize ++ rest) = some (n, rest) := by
-  simp [UInt32.parser]
-  rw [←UInt32.parser_len n]
-  rw [Parser.bytes_roundtrip _ _]
-  simp [UInt32.serialize]
+  simp [UInt32.parser, UInt32.serialize, UInt8.parser, Option.bind, Option.map]
   bv_decide
 
 theorem UInt32.reconstruct {n : UInt32} {input rest : List UInt8} :
@@ -81,19 +73,22 @@ theorem UInt32.reconstruct {n : UInt32} {input rest : List UInt8} :
   simp only [UInt32.parser, UInt32.serialize]
   intro h
 
-  obtain ⟨bytes, mid, h_bytes, h_next⟩ := Parser.bind_run_success h
+  obtain ⟨b1, mid1, h_b1, h_next1⟩ := Parser.bind_run_success h
+  obtain ⟨b2, mid2, h_b2, h_next2⟩ := Parser.bind_run_success h_next1
+  obtain ⟨b3, mid3, h_b3, h_next3⟩ := Parser.bind_run_success h_next2
+  obtain ⟨b4, mid4, h_b4, h_next4⟩ := Parser.bind_run_success h_next3
+  obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next4
 
-  split at h_next
-  · next _ b1 b2 b3 b4 =>
-    obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next
-    subst h_n h_rest
+  subst h_rest h_n
 
-    have h_rec := Parser.bytes_reconstruct h_bytes
-    rw [h_rec]
+  have h_rec1 := UInt8.reconstruct h_b1
+  have h_rec2 := UInt8.reconstruct h_b2
+  have h_rec3 := UInt8.reconstruct h_b3
+  have h_rec4 := UInt8.reconstruct h_b4
 
-    simp
-    exact ⟨by bv_decide, by bv_decide, by bv_decide, by bv_decide⟩
-  · contradiction
+  rw [h_rec1, h_rec2, h_rec3, h_rec4]
+  simp [UInt8.serialize, List.cons_append, List.nil_append]
+  bv_decide
 
 theorem String.serialize_len (s : String) :
     s.serialize.length = s.utf8ByteSize := by

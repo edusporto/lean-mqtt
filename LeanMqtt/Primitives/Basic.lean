@@ -28,13 +28,9 @@ def UInt16.serialize (n : UInt16) : List UInt8 :=
   [b1, b2]
 
 def UInt16.parser : Parser UInt16 := do
-  let bytes ← Parser.bytes 2
-  match bytes with
-  | [b1, b2] => return (b1.toUInt16 <<< 8) ||| b2.toUInt16
-  -- Note: the empty case is impossible.
-  -- We could change this function so we wouldn't have to
-  -- include it. However, this would make proofs harder.
-  | _ => none
+  let b1 ← UInt8.parser
+  let b2 ← UInt8.parser
+  return (b1.toUInt16 <<< 8) ||| b2.toUInt16
 
 /- ========================= UInt32 ========================= -/
 
@@ -46,14 +42,14 @@ def UInt32.serialize (n : UInt32) : List UInt8 :=
   [b1, b2, b3, b4]
 
 def UInt32.parser : Parser UInt32 := do
-  let bytes ← Parser.bytes 4
-  match bytes with
-  | [b1, b2, b3, b4] =>
-    return (b1.toUInt32 <<< 24) |||
-           (b2.toUInt32 <<< 16) |||
-           (b3.toUInt32 <<< 8)  |||
-            b4.toUInt32
-  | _ => none
+  let b1 ← UInt8.parser
+  let b2 ← UInt8.parser
+  let b3 ← UInt8.parser
+  let b4 ← UInt8.parser
+  return (b1.toUInt32 <<< 24) |||
+         (b2.toUInt32 <<< 16) |||
+         (b3.toUInt32 <<< 8)  |||
+          b4.toUInt32
 
 /- ========================= VarInt ========================= -/
 
