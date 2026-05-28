@@ -1,4 +1,5 @@
 import LeanMqtt.Core.WithByteSize
+import LeanMqtt.Core.Codec
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Primitives.VarInt.Basic
 import LeanMqtt.Primitives.Str.Basic
@@ -92,3 +93,7 @@ def Property.byteSize (p : Property) : Nat :=
 
 instance : GetByteSize Property where
   byteSize := Property.byteSize
+
+instance : Codec Property where
+  parser      := Property.parser
+  serialize   := Property.serialize

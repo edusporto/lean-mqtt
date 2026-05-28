@@ -1,4 +1,5 @@
 import LeanMqtt.Primitives.UInt.Basic
+import LeanMqtt.Core.Codec
 
 namespace Mqtt
 
@@ -73,5 +74,17 @@ def BinaryData.parser : Parser BinaryData := do
     simp [Coe.coe, GetByteSize.byteSize]; apply h.symm
 
   return {val := b, len := ⟨len, h_len⟩ }
+
+instance : Codec Str where
+  parser := Str.parser
+  serialize := Str.serialize
+
+instance : Codec StrPair where
+  parser := StrPair.parser
+  serialize := StrPair.serialize
+
+instance : Codec BinaryData where
+  parser := BinaryData.parser
+  serialize := BinaryData.serialize
 
 end Mqtt

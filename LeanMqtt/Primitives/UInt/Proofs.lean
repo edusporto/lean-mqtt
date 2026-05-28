@@ -51,9 +51,7 @@ theorem UInt16.reconstruct {n : UInt16} {input rest : List UInt8} :
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
 
-instance : Codec UInt16 where
-  parser      := UInt16.parser
-  serialize   := UInt16.serialize
+instance : LawfulCodec UInt16 where
   roundtrip   := UInt16.roundtrip
   reconstruct := UInt16.reconstruct
 
@@ -85,5 +83,13 @@ theorem UInt32.reconstruct {n : UInt32} {input rest : List UInt8} :
 
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
+
+instance : LawfulCodec UInt8 where
+  roundtrip := UInt8.roundtrip
+  reconstruct := UInt8.reconstruct
+
+instance : LawfulCodec UInt32 where
+  roundtrip := UInt32.roundtrip
+  reconstruct := UInt32.reconstruct
 
 end Mqtt

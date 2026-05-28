@@ -263,9 +263,7 @@ theorem VarInt.reconstruct {v : VarInt} {input rest : List UInt8} :
                         unfold parser.loop at h_parse
                         contradiction
 
-instance : Codec VarInt where
-  parser      := VarInt.parser
-  serialize   := VarInt.serialize
+instance : LawfulCodec VarInt where
   roundtrip   := VarInt.roundtrip
   reconstruct := VarInt.reconstruct
 

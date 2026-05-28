@@ -72,9 +72,7 @@ theorem Property.byteSize_pos (p : Property) : 0 < p.byteSize := by
   unfold VarInt.serialize
   grind
 
-instance : Codec Property where
-  parser      := Property.parser
-  serialize   := Property.serialize
+instance : LawfulCodec Property where
   roundtrip   := Property.roundtrip
   reconstruct := Property.reconstruct
 

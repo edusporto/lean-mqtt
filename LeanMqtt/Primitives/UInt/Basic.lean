@@ -1,5 +1,6 @@
 import LeanMqtt.Core.Parser.Basic
 import LeanMqtt.Core.WithByteSize
+import LeanMqtt.Core.Codec
 
 instance : Coe UInt16 Nat where
   coe := UInt16.toNat
@@ -50,5 +51,17 @@ def UInt32.parser : Parser UInt32 := do
          (b2.toUInt32 <<< 16) |||
          (b3.toUInt32 <<< 8)  |||
           b4.toUInt32
+
+instance : Codec UInt8 where
+  parser := UInt8.parser
+  serialize := UInt8.serialize
+
+instance : Codec UInt16 where
+  parser := UInt16.parser
+  serialize := UInt16.serialize
+
+instance : Codec UInt32 where
+  parser := UInt32.parser
+  serialize := UInt32.serialize
 
 end Mqtt

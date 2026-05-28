@@ -215,4 +215,16 @@ theorem BinaryData.reconstruct {b : BinaryData} {input rest : List UInt8} :
       h_result]
   simp [List.append_assoc]
 
+instance : LawfulCodec Str where
+  roundtrip := Str.roundtrip
+  reconstruct := Str.reconstruct
+
+instance : LawfulCodec StrPair where
+  roundtrip := StrPair.roundtrip
+  reconstruct := StrPair.reconstruct
+
+instance : LawfulCodec BinaryData where
+  roundtrip := BinaryData.roundtrip
+  reconstruct := BinaryData.reconstruct
+
 end Mqtt

@@ -10,7 +10,9 @@ open Mqtt
 class Codec (α : Type) where
   parser : Parser α
   serialize : α → List UInt8
+
+class LawfulCodec (α : Type) [Codec α] where
   roundtrip : ∀ (a : α) {rest : List UInt8},
-    parser.run (serialize a ++ rest) = some (a, rest)
+    (Codec.parser (α := α)).run (Codec.serialize a ++ rest) = some (a, rest)
   reconstruct : ∀ {a : α} {input rest : List UInt8},
-    parser.run input = some (a, rest) → input = serialize a ++ rest
+    (Codec.parser (α := α)).run input = some (a, rest) → input = Codec.serialize a ++ rest

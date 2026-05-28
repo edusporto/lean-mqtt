@@ -1,4 +1,5 @@
 import LeanMqtt.Primitives.UInt.Basic
+import LeanMqtt.Core.Codec
 
 namespace Mqtt
 
@@ -72,5 +73,9 @@ def VarInt.parser : Parser VarInt := do
         failure
 
   loop mul_start acc_start max_bytes
+
+instance : Codec VarInt where
+  parser := VarInt.parser
+  serialize := VarInt.serialize
 
 end Mqtt

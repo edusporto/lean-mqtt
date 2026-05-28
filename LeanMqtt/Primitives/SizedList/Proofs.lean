@@ -5,15 +5,16 @@ import LeanMqtt.Primitives.SizedList.Basic
 namespace Mqtt
 open Mqtt
 
-theorem ChunkItem.serialize_length {α : Type} [GetByteSize α] [Codec α] [ChunkItem α] (a : α) :
+theorem ChunkItem.serialize_length {α : Type}
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α] (a : α) :
     (Codec.serialize a).length = GetByteSize.byteSize a := by
-  have h_rt := Codec.roundtrip a (rest := [])
+  have h_rt := LawfulCodec.roundtrip a (rest := [])
   have h_c := ChunkItem.h_consumed h_rt
   simp at h_c
   exact h_c
 
 theorem ChunkItem.serialize_list_length {α : Type}
-    [GetByteSize α] [Codec α] [ChunkItem α] (l : List α) :
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α] (l : List α) :
     (l.flatMap Codec.serialize).length = List.rawByteSize l := by
   induction l with
   | nil => rfl
@@ -24,7 +25,7 @@ theorem ChunkItem.serialize_list_length {α : Type}
     rfl
 
 theorem ChunkItem.serialize_not_empty {α : Type}
-    [GetByteSize α] [Codec α] [ChunkItem α] (a : α) (rest : List UInt8) :
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α] (a : α) (rest : List UInt8) :
     (Codec.serialize a ++ rest).isEmpty = false := by
   cases h : Codec.serialize a ++ rest with
   | nil =>
@@ -36,7 +37,7 @@ theorem ChunkItem.serialize_not_empty {α : Type}
   | cons _ _ => rfl
 
 theorem ChunkItem.parseChunkLoop_roundtrip {α : Type}
-    [s : GetByteSize α] [Codec α] [c : ChunkItem α] (l : List α) :
+    [s : GetByteSize α] [Codec α] [LawfulCodec α] [c : ChunkItem α] (l : List α) :
     ∃ h, ChunkItem.parseChunkLoop (l.flatMap Codec.serialize) = some ⟨l, h⟩ := by
   induction l with
   | nil =>
@@ -54,7 +55,7 @@ theorem ChunkItem.parseChunkLoop_roundtrip {α : Type}
     have h_not_empty := ChunkItem.serialize_not_empty a (as.flatMap Codec.serialize)
     simp [h_not_empty]
 
-    have h_rt := Codec.roundtrip a (rest := as.flatMap Codec.serialize)
+    have h_rt := LawfulCodec.roundtrip a (rest := as.flatMap Codec.serialize)
 
     split
     · next item rest h_parse_eq =>
@@ -75,7 +76,7 @@ theorem ChunkItem.parseChunkLoop_roundtrip {α : Type}
       contradiction
 
 theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
-    [GetByteSize α] [Codec α] [ChunkItem α]
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
     {chunk : List UInt8} {items : List α}
     (h_len : chunk.length = (items.map GetByteSize.byteSize).sum) :
     ChunkItem.parseChunkLoop chunk = some ⟨items, h_len⟩ →
@@ -115,7 +116,7 @@ theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
                 subst h_a h_as
 
                 -- Reconstruct the head
-                have h_rec_item := Codec.reconstruct h_item_parse
+                have h_rec_item := LawfulCodec.reconstruct h_item_parse
 
                 -- Use the induction hypothesis for the tail directly
                 have h_rec_tail := ih h_tail_len h_tail_parse
@@ -127,13 +128,14 @@ theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
         · contradiction
 
 theorem SizedList.roundtrip {α lenTyp : Type}
-    [GetByteSize α] [Codec α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp]
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
+    [Coe lenTyp Nat] [Codec lenTyp] [LawfulCodec lenTyp]
     (sl : SizedList α lenTyp) {rest : List UInt8} :
     SizedList.parser.run (SizedList.serialize sl ++ rest) = some (sl, rest) := by
 
   simp [SizedList.parser, SizedList.serialize, Option.bind]
 
-  rw [Codec.roundtrip sl.len.val]
+  rw [LawfulCodec.roundtrip sl.len.val]
   simp
 
   have h_len_eq : (sl.len.val : Nat) = (sl.val.flatMap Codec.serialize).length := by
@@ -154,7 +156,8 @@ theorem SizedList.roundtrip {α lenTyp : Type}
   simp
 
 theorem SizedList.reconstruct {α lenTyp : Type}
-    [GetByteSize α] [Codec α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp]
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
+    [Coe lenTyp Nat] [Codec lenTyp] [LawfulCodec lenTyp]
     {sl : SizedList α lenTyp} {input rest : List UInt8} :
     SizedList.parser.run input = some (sl, rest) →
     input = SizedList.serialize sl ++ rest := by
@@ -172,7 +175,7 @@ theorem SizedList.reconstruct {α lenTyp : Type}
 
     finish_parser h → h_sl
 
-    have h_rec_len   := Codec.reconstruct h_lenVal
+    have h_rec_len   := LawfulCodec.reconstruct h_lenVal
     have h_rec_chunk := Parser.bytesWithProof_reconstruct h_chunkVal
     have h_rec_loop  :=
       ChunkItem.parseChunkLoop_reconstruct h_loop_len h_match
