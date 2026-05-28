@@ -21,6 +21,10 @@ def UInt8.parser : Parser UInt8 := do
     set rest
     some b
 
+instance : Codec UInt8 where
+  parser := UInt8.parser
+  serialize := UInt8.serialize
+
 /- ========================= UInt16 ========================= -/
 
 def UInt16.serialize (n : UInt16) : List UInt8 :=
@@ -32,6 +36,10 @@ def UInt16.parser : Parser UInt16 := do
   let b1 ← UInt8.parser
   let b2 ← UInt8.parser
   return (b1.toUInt16 <<< 8) ||| b2.toUInt16
+
+instance : Codec UInt16 where
+  parser := UInt16.parser
+  serialize := UInt16.serialize
 
 /- ========================= UInt32 ========================= -/
 
@@ -51,14 +59,6 @@ def UInt32.parser : Parser UInt32 := do
          (b2.toUInt32 <<< 16) |||
          (b3.toUInt32 <<< 8)  |||
           b4.toUInt32
-
-instance : Codec UInt8 where
-  parser := UInt8.parser
-  serialize := UInt8.serialize
-
-instance : Codec UInt16 where
-  parser := UInt16.parser
-  serialize := UInt16.serialize
 
 instance : Codec UInt32 where
   parser := UInt32.parser
