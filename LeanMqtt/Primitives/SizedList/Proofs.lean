@@ -1,10 +1,5 @@
-import LeanMqtt.Helpers.Proofs
-import LeanMqtt.Helpers.NatifyUInt8
-import LeanMqtt.Helpers.CrushLits
-
 import LeanMqtt.Core.Parser.Proofs
 import LeanMqtt.Helpers.ParserTactics
-import LeanMqtt.Primitives.Basic
 import LeanMqtt.Primitives.SizedList.Basic
 
 namespace Mqtt

@@ -1,4 +1,5 @@
 import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.OptType.Proofs
 import LeanMqtt.Helpers.ParserTactics
 import LeanMqtt.Packets.VarHeader.Variations
 import LeanMqtt.Packets.VarHeader.Properties.Proofs
@@ -51,79 +52,24 @@ theorem Var_Connack.reconstruct {v : Var_Connack} {input rest : List UInt8} :
 
 theorem Var_Publish.roundtrip {qos : QoSBits} (v : Var_Publish qos) {rest : List UInt8} :
     (Var_Publish.parser qos).run (v.serialize ++ rest) = some (v, rest) := by
-
-  -- Unpack the subtype into its raw value and proof immediately.
-  -- This prevents "motive is not type correct" errors later when we substitute.
-  rcases qos with ⟨qos_val, h_qos⟩
-
   simp [Var_Publish.parser, Var_Publish.serialize]
-  simp [Str.roundtrip]
-
-  split
-  · next h_qos_pos =>
-    -- Case: QoS > 0
-    simp [UInt16.roundtrip]
-    simp [Properties.roundtrip]
-  · next h_qos_zero =>
-    -- Case: QoS == 0
-    simp [Properties.roundtrip]
-    congr
-
-    have h_zero : qos_val = 0 := by bv_decide
-
-    subst h_zero
-    simp
-    apply Subsingleton.elim () v.packet_id
+  simp [Str.roundtrip, OptType.roundtrip, Properties.roundtrip]
 
 theorem Var_Publish.reconstruct {qos : QoSBits} {v : Var_Publish qos} {input rest : List UInt8} :
     (Var_Publish.parser qos).run input = some (v, rest) → input = v.serialize ++ rest := by
-  rcases qos with ⟨qos_val, h_qos⟩
   simp only [Var_Publish.parser, Var_Publish.serialize]
   intro h
 
   step_parser h → topicVal rest1 h_topicVal
+  step_parser h → pidVal rest2 h_pidVal
+  step_parser h → propsVal rest3 h_propsVal
+  finish_parser h → h_v
+  subst h_v
 
-  revert h
-  split
-  · next h_qos_pos =>
-    intro h
-    -- Extract UInt16.parser as a black box
-    step_parser h → pidVal rest2 h_pidVal
-
-    -- Extract the `let y ← pure (cast ...)` statement
-    step_parser h → pid_castVal rest_mid h_pure_cast
-    finish_parser h_pure_cast → h_cast_eq
-    subst h_cast_eq
-
-    -- Extract Properties.parser
-    step_parser h → propsVal rest3 h_propsVal
-
-    -- Extract final pure return
-    finish_parser h → h_v
-    subst h_v
-
-    -- Apply reconstruction helpers
-    rw [Str.reconstruct h_topicVal, UInt16.reconstruct h_pidVal, Properties.reconstruct h_propsVal]
-    simp
-
-  · next h_qos_zero =>
-    intro h
-
-    -- Extract the `let y ← pure (cast ...)` statement
-    step_parser h → pid_castVal rest_mid h_pure_cast
-    finish_parser h_pure_cast → h_cast_eq
-    subst h_cast_eq
-
-    -- Extract Properties.parser
-    step_parser h → propsVal rest3 h_propsVal
-
-    -- Extract final pure return
-    finish_parser h → h_v
-    subst h_v
-
-    -- Apply reconstruction helpers
-    rw [Str.reconstruct h_topicVal, Properties.reconstruct h_propsVal]
-    simp
+  rw [Str.reconstruct h_topicVal,
+      OptType.reconstruct (qos.val > 0) h_pidVal,
+      Properties.reconstruct h_propsVal]
+  simp only [List.append_assoc]
 
 theorem Var_Puback.roundtrip (v : Var_Puback) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by

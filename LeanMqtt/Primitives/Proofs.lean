@@ -54,6 +54,12 @@ theorem UInt16.reconstruct {n : UInt16} {input rest : List UInt8} :
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
 
+instance : Codec UInt16 where
+  parser      := UInt16.parser
+  serialize   := UInt16.serialize
+  roundtrip   := UInt16.roundtrip
+  reconstruct := UInt16.reconstruct
+
 theorem UInt32.parser_len (n : UInt32) :
     n.serialize.length = 4 := by
   rfl

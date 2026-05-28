@@ -1,4 +1,6 @@
 import LeanMqtt.Primitives.Basic
+import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.OptType.Basic
 import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Packets.VarHeader.Properties.Basic
 
@@ -46,30 +48,19 @@ def Var_Connack.parser : Parser Var_Connack := do
 
 /- ========================= Var_Publish ========================= -/
 
--- We now accept the proven QoSBits subtype directly
 structure Var_Publish (qos : QoSBits) where
   topic_name : Str
-  packet_id  : if qos.val > 0 then UInt16 else Unit
+  packet_id  : OptType UInt16 (qos.val > 0)
   props      : Properties
 
 def Var_Publish.serialize {qos : QoSBits} (v : Var_Publish qos) : List UInt8 :=
   v.topic_name.serialize ++
-  (if h : qos.val > 0 then
-    let pid : UInt16 := cast (by rw [if_pos h]) v.packet_id
-    pid.serialize
-   else []) ++
+  v.packet_id.serialize ++
   v.props.serialize
 
 def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
   let topic_name ← Str.parser
-
-  let packet_id : (if qos.val > 0 then UInt16 else Unit) ←
-    if h : qos.val > 0 then
-      let pid ← UInt16.parser
-      pure (cast (by rw [if_pos h]) pid)
-    else
-      pure (cast (by rw [if_neg h]) ())
-
+  let packet_id ← OptType.parser (qos.val > 0)
   let props ← Properties.parser
 
   return { topic_name, packet_id, props }
