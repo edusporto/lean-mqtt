@@ -1,4 +1,5 @@
-import LeanMqtt.Primitives.Basic
+import LeanMqtt.Primitives.UInt.Basic
+import LeanMqtt.Primitives.VarInt.Basic
 
 namespace Mqtt
 open Mqtt

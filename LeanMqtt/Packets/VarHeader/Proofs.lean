@@ -1,4 +1,5 @@
-import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.UInt.Proofs
+import LeanMqtt.Primitives.Str.Proofs
 import LeanMqtt.Primitives.OptType.Proofs
 import LeanMqtt.Helpers.ParserTactics
 import LeanMqtt.Packets.VarHeader.Variations

@@ -1,4 +1,4 @@
-import LeanMqtt.Primitives.Basic
+import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Packets.VarHeader.Properties.Basic
 import LeanMqtt.Packets.VarHeader.Variations

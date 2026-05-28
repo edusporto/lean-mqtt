@@ -3,7 +3,8 @@ import LeanMqtt.Packets.VarHeader.Property.Basic
 import LeanMqtt.Packets.VarHeader.Property.Proofs
 import LeanMqtt.Packets.VarHeader.Properties.Basic
 import LeanMqtt.Packets.VarHeader.Variations
-import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.UInt.Proofs
+import LeanMqtt.Primitives.VarInt.Proofs
 import LeanMqtt.Primitives.SizedList.Proofs
 
 namespace Mqtt

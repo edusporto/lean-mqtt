@@ -1,5 +1,5 @@
-import LeanMqtt.Primitives.Basic
-import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.UInt.Basic
+import LeanMqtt.Primitives.Str.Basic
 import LeanMqtt.Primitives.OptType.Basic
 import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Packets.VarHeader.Properties.Basic

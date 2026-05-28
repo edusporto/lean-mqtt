@@ -1,6 +1,7 @@
 import Std.Tactic.BVDecide
 import LeanMqtt.Packets.FixedHeader.Basic
-import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Primitives.UInt.Proofs
+import LeanMqtt.Primitives.VarInt.Proofs
 import LeanMqtt.Helpers.ParserTactics
 
 namespace Mqtt
