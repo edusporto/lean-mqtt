@@ -1,6 +1,7 @@
 import Std.Tactic.BVDecide
 import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Helpers.ParserTactics
 
 namespace Mqtt
 open Mqtt
@@ -66,14 +67,7 @@ theorem FixedHeader.roundtrip (header : FixedHeader) {rest : List UInt8} :
   have h_lower : BitVec.extractLsb 3 0 reading = PktFlags.encode header.kind header.flags := by bv_decide
   rw [h_upper, h_lower]
 
-  rw [PktKind.decode_encode]
-  simp
-
-  rw [PktFlags.encode_decode]
-  simp
-
-  rw [VarInt.roundtrip]
-  simp
+  simp [PktKind.decode_encode, PktFlags.encode_decode, VarInt.roundtrip]
 
 theorem FixedHeader.reconstruct {header : FixedHeader} {input rest : List UInt8} :
     FixedHeader.parser.run input = some (header, rest) →
@@ -83,42 +77,34 @@ theorem FixedHeader.reconstruct {header : FixedHeader} {input rest : List UInt8}
   intro h
 
   -- Linearly extract every single parsed line from the `do` block
-  obtain ⟨byte, mid1, h_byte, h_next1⟩   := Parser.bind_run_success h
-  obtain ⟨kind, mid2, h_kind, h_next2⟩   := Parser.bind_run_success h_next1
-  obtain ⟨flags, mid3, h_flags, h_next3⟩ := Parser.bind_run_success h_next2
-  obtain ⟨size, mid4, h_size, h_pure⟩    := Parser.bind_run_success h_next3
+  step_parser h → byteVal rest1 h_byteVal
+  step_parser h → kindVal rest2 h_kindVal
+  step_parser h → flagsVal rest3 h_flagsVal
+  step_parser h → sizeVal rest4 h_sizeVal
 
   -- Extract the pure return and align our goal
-  obtain ⟨h_header, h_rest⟩ := Parser.pure_run_success h_pure
-  subst h_rest
-
-  -- Use forward rewrite, or `subst` to replace `header` everywhere
-  subst h_header
+  finish_parser h → h_result
+  subst h_result
 
   -- Unpack the lifted options.
-  -- This proves that the state didn't move (mid1 = mid2 = mid3) and
+  -- This proves that the state didn't move (rest2 = rest1, rest3 = rest2) and
   -- gives us the raw Option truths.
+  finish_parser h_kindVal → h_k_opt
+  finish_parser h_flagsVal → h_f_opt
 
-  obtain ⟨h_k_opt, h_mid2⟩ := Parser.liftM_run_success h_kind
-  obtain ⟨h_f_opt, h_mid3⟩ := Parser.liftM_run_success h_flags
-  subst h_mid2 h_mid3
-
-  -- Gather reconstruction truths
-  have h_rec_byte := UInt8.reconstruct h_byte
-  have h_rec_size := VarInt.reconstruct h_size
-  have h_k_eq := PktKind.decode_eq_encode h_k_opt
-  have h_f_eq := PktFlags.decode_eq_encode h_f_opt
-
-  rw [h_rec_byte, h_rec_size]
+  -- Reconstruction proofs
+  rw [UInt8.reconstruct h_byteVal, VarInt.reconstruct h_sizeVal]
   simp only [UInt8.serialize, List.append_assoc]
 
   -- Prove the 8-bit vector equals the concatenated 4-bit vectors
-  have h_byte_bv : byte.toBitVec = (kind.encode ++ PktFlags.encode kind flags) := by
+  have h_byte_bv : byteVal.toBitVec = (kindVal.encode ++ PktFlags.encode kindVal flagsVal) := by
+    have h_k_eq := PktKind.decode_eq_encode h_k_opt
+    have h_f_eq := PktFlags.decode_eq_encode h_f_opt
     rw [←h_k_eq, ←h_f_eq]
     bv_decide
 
   -- Substitute the BitVec equality to prove the UInt8 byte matches
-  have h_byte_eq : byte = UInt8.ofBitVec (kind.encode ++ PktFlags.encode kind flags) := by
+  have h_byte_eq : byteVal = UInt8.ofBitVec (kindVal.encode ++ PktFlags.encode kindVal flagsVal) := by
     rw [←h_byte_bv]
 
   rw [h_byte_eq]

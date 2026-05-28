@@ -1,4 +1,5 @@
 import LeanMqtt.Primitives.Proofs
+import LeanMqtt.Helpers.ParserTactics
 import LeanMqtt.Packets.VarHeader.Variations
 import LeanMqtt.Packets.VarHeader.Properties.Proofs
 
@@ -17,16 +18,16 @@ theorem Var_Connect.reconstruct
     Var_Connect.parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨p_name, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨p_ver, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨c_flags, m3, h5, h6⟩ := Parser.bind_run_success h4
-  obtain ⟨props, m4, h7, h8⟩ := Parser.bind_run_success h6
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h8
-  subst h_rest h_v
-  rw [Str.reconstruct h1,
-    UInt8.reconstruct h3,
-    UInt8.reconstruct h5,
-    Properties.reconstruct h7]
+  step_parser h → p_nameVal rest1 h_p_nameVal
+  step_parser h → p_verVal rest2 h_p_verVal
+  step_parser h → c_flagsVal rest3 h_c_flagsVal
+  step_parser h → propsVal rest4 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [Str.reconstruct h_p_nameVal,
+    UInt8.reconstruct h_p_verVal,
+    UInt8.reconstruct h_c_flagsVal,
+    Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Connack.roundtrip (v : Var_Connack) {rest : List UInt8} :
@@ -38,14 +39,14 @@ theorem Var_Connack.reconstruct {v : Var_Connack} {input rest : List UInt8} :
     Var_Connack.parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨ack_flags, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
-  subst h_rest h_v
-  rw [UInt8.reconstruct h1,
-    UInt8.reconstruct h3,
-    Properties.reconstruct h5]
+  step_parser h → ack_flagsVal rest1 h_ack_flagsVal
+  step_parser h → rcodeVal rest2 h_rcodeVal
+  step_parser h → propsVal rest3 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt8.reconstruct h_ack_flagsVal,
+    UInt8.reconstruct h_rcodeVal,
+    Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Publish.roundtrip {qos : QoSBits} (v : Var_Publish qos) {rest : List UInt8} :
@@ -80,48 +81,48 @@ theorem Var_Publish.reconstruct {qos : QoSBits} {v : Var_Publish qos} {input res
   simp only [Var_Publish.parser, Var_Publish.serialize]
   intro h
 
-  obtain ⟨topic, m1, h_topic, h_next1⟩ := Parser.bind_run_success h
+  step_parser h → topicVal rest1 h_topicVal
 
-  revert h_next1
+  revert h
   split
   · next h_qos_pos =>
-    intro h_next1
+    intro h
     -- Extract UInt16.parser as a black box
-    obtain ⟨pid, m2, h_pid, h_next2⟩ := Parser.bind_run_success h_next1
+    step_parser h → pidVal rest2 h_pidVal
 
     -- Extract the `let y ← pure (cast ...)` statement
-    obtain ⟨pid_cast, m2_mid, h_pure_cast, h_next3⟩ := Parser.bind_run_success h_next2
-    obtain ⟨h_cast_eq, h_m2_eq⟩ := Parser.pure_run_success h_pure_cast
-    subst h_m2_eq h_cast_eq
+    step_parser h → pid_castVal rest_mid h_pure_cast
+    finish_parser h_pure_cast → h_cast_eq
+    subst h_cast_eq
 
     -- Extract Properties.parser
-    obtain ⟨props, m3, h_props, h_pure⟩ := Parser.bind_run_success h_next3
+    step_parser h → propsVal rest3 h_propsVal
 
     -- Extract final pure return
-    obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h_pure
-    subst h_rest h_v
+    finish_parser h → h_v
+    subst h_v
 
     -- Apply reconstruction helpers
-    rw [Str.reconstruct h_topic, UInt16.reconstruct h_pid, Properties.reconstruct h_props]
+    rw [Str.reconstruct h_topicVal, UInt16.reconstruct h_pidVal, Properties.reconstruct h_propsVal]
     simp
 
   · next h_qos_zero =>
-    intro h_next1
+    intro h
 
     -- Extract the `let y ← pure (cast ...)` statement
-    obtain ⟨pid_cast, m2, h_pure_cast, h_next2⟩ := Parser.bind_run_success h_next1
-    obtain ⟨h_cast_eq, h_m2_eq⟩ := Parser.pure_run_success h_pure_cast
-    subst h_m2_eq h_cast_eq
+    step_parser h → pid_castVal rest_mid h_pure_cast
+    finish_parser h_pure_cast → h_cast_eq
+    subst h_cast_eq
 
     -- Extract Properties.parser
-    obtain ⟨props, m3, h_props, h_pure⟩ := Parser.bind_run_success h_next2
+    step_parser h → propsVal rest3 h_propsVal
 
     -- Extract final pure return
-    obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h_pure
-    subst h_rest h_v
+    finish_parser h → h_v
+    subst h_v
 
     -- Apply reconstruction helpers
-    rw [Str.reconstruct h_topic, Properties.reconstruct h_props]
+    rw [Str.reconstruct h_topicVal, Properties.reconstruct h_propsVal]
     simp
 
 theorem Var_Puback.roundtrip (v : Var_Puback) {rest : List UInt8} :
@@ -133,14 +134,14 @@ theorem Var_Puback.reconstruct {v : Var_Puback} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1,
-      UInt8.reconstruct h3,
-      Properties.reconstruct h5]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → rcodeVal rest2 h_rcodeVal
+  step_parser h → propsVal rest3 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal,
+      UInt8.reconstruct h_rcodeVal,
+      Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pubrec.roundtrip (v : Var_Pubrec) {rest : List UInt8} :
@@ -152,14 +153,14 @@ theorem Var_Pubrec.reconstruct {v : Var_Pubrec} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1,
-    UInt8.reconstruct h3,
-    Properties.reconstruct h5]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → rcodeVal rest2 h_rcodeVal
+  step_parser h → propsVal rest3 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal,
+    UInt8.reconstruct h_rcodeVal,
+    Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pubrel.roundtrip (v : Var_Pubrel) {rest : List UInt8} :
@@ -171,14 +172,14 @@ theorem Var_Pubrel.reconstruct {v : Var_Pubrel} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1,
-    UInt8.reconstruct h3,
-    Properties.reconstruct h5]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → rcodeVal rest2 h_rcodeVal
+  step_parser h → propsVal rest3 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal,
+    UInt8.reconstruct h_rcodeVal,
+    Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pubcomp.roundtrip (v : Var_Pubcomp) {rest : List UInt8} :
@@ -190,14 +191,14 @@ theorem Var_Pubcomp.reconstruct {v : Var_Pubcomp} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨rcode, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨props, m3, h5, h6⟩ := Parser.bind_run_success h4
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h6
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1,
-    UInt8.reconstruct h3,
-    Properties.reconstruct h5]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → rcodeVal rest2 h_rcodeVal
+  step_parser h → propsVal rest3 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal,
+    UInt8.reconstruct h_rcodeVal,
+    Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Subscribe.roundtrip (v : Var_Subscribe) {rest : List UInt8} :
@@ -209,11 +210,11 @@ theorem Var_Subscribe.reconstruct {v : Var_Subscribe} {input rest : List UInt8} 
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1, Properties.reconstruct h3]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → propsVal rest2 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Suback.roundtrip (v : Var_Suback) {rest : List UInt8} :
@@ -225,11 +226,11 @@ theorem Var_Suback.reconstruct {v : Var_Suback} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1, Properties.reconstruct h3]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → propsVal rest2 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Unsubscribe.roundtrip (v : Var_Unsubscribe) {rest : List UInt8} :
@@ -241,11 +242,11 @@ theorem Var_Unsubscribe.reconstruct {v : Var_Unsubscribe} {input rest : List UIn
   parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1, Properties.reconstruct h3]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → propsVal rest2 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Unsuback.roundtrip (v : Var_Unsuback) {rest : List UInt8} :
@@ -257,11 +258,11 @@ theorem Var_Unsuback.reconstruct {v : Var_Unsuback} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨pid, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
-  subst h_rest h_v
-  rw [UInt16.reconstruct h1, Properties.reconstruct h3]
+  step_parser h → pidVal rest1 h_pidVal
+  step_parser h → propsVal rest2 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt16.reconstruct h_pidVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pingreq.roundtrip (v : Var_Pingreq) {rest : List UInt8} :
@@ -272,8 +273,8 @@ theorem Var_Pingreq.reconstruct {v : Var_Pingreq} {input rest : List UInt8} :
   parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h
-  subst h_rest h_v
+  finish_parser h → h_v
+  subst h_v
   rfl
 
 theorem Var_Pingresp.roundtrip (v : Var_Pingresp) {rest : List UInt8} :
@@ -284,8 +285,8 @@ theorem Var_Pingresp.reconstruct {v : Var_Pingresp} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h
-  subst h_rest h_v
+  finish_parser h → h_v
+  subst h_v
   rfl
 
 theorem Var_Disconnect.roundtrip (v : Var_Disconnect) {rest : List UInt8} :
@@ -297,11 +298,11 @@ theorem Var_Disconnect.reconstruct {v : Var_Disconnect} {input rest : List UInt8
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨rcode, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
-  subst h_rest h_v
-  rw [UInt8.reconstruct h1, Properties.reconstruct h3]
+  step_parser h → rcodeVal rest1 h_rcodeVal
+  step_parser h → propsVal rest2 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt8.reconstruct h_rcodeVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Auth.roundtrip (v : Var_Auth) {rest : List UInt8} :
@@ -313,11 +314,11 @@ theorem Var_Auth.reconstruct {v : Var_Auth} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
   simp only [parser, serialize]
   intro h
-  obtain ⟨rcode, m1, h1, h2⟩ := Parser.bind_run_success h
-  obtain ⟨props, m2, h3, h4⟩ := Parser.bind_run_success h2
-  obtain ⟨h_v, h_rest⟩ := Parser.pure_run_success h4
-  subst h_rest h_v
-  rw [UInt8.reconstruct h1, Properties.reconstruct h3]
+  step_parser h → rcodeVal rest1 h_rcodeVal
+  step_parser h → propsVal rest2 h_propsVal
+  finish_parser h → h_v
+  subst h_v
+  rw [UInt8.reconstruct h_rcodeVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem VarHeader.roundtrip_value

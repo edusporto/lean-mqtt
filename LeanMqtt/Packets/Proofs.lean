@@ -1,6 +1,7 @@
 import LeanMqtt.Packets.Basic
 import LeanMqtt.Packets.FixedHeader.Proofs
 import LeanMqtt.Packets.VarHeader.Proofs
+import LeanMqtt.Helpers.ParserTactics
 
 namespace Mqtt
 
@@ -16,16 +17,15 @@ theorem Header.reconstruct {h : Header} {input rest : List UInt8} :
   simp only [parser, serialize]
   intro h_run
 
-  obtain ⟨fix, m1, h_fix, h_next⟩ := Parser.bind_run_success h_run
-  obtain ⟨var, m2, h_var, h_pure⟩ := Parser.bind_run_success h_next
+  step_parser h_run → fixVal rest1 h_fixVal
+  step_parser h_run → varVal rest2 h_varVal
 
-  obtain ⟨h_eq, h_rest_eq⟩ := Parser.pure_run_success h_pure
-  subst h_rest_eq
+  finish_parser h_run → h_eq
 
   cases h_eq
 
-  have h_fix_rec := FixedHeader.reconstruct h_fix
-  have h_var_rec := VarHeader.reconstruct h_var
+  have h_fix_rec := FixedHeader.reconstruct h_fixVal
+  have h_var_rec := VarHeader.reconstruct h_varVal
 
   rw [h_fix_rec, h_var_rec]
 

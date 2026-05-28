@@ -3,6 +3,7 @@ import LeanMqtt.Helpers.NatifyUInt8
 import LeanMqtt.Helpers.CrushLits
 
 import LeanMqtt.Core.Parser.Proofs
+import LeanMqtt.Helpers.ParserTactics
 import LeanMqtt.Primitives.Basic
 import LeanMqtt.Primitives.SizedList.Basic
 
@@ -166,20 +167,18 @@ theorem SizedList.reconstruct {α lenTyp : Type}
   simp only [SizedList.parser, SizedList.serialize]
   intro h
 
-  obtain ⟨len, mid1, h_len, h_next1⟩ := Parser.bind_run_success h
+  step_parser h → lenVal rest1 h_lenVal
+  step_parser h → chunkVal rest2 h_chunkVal
 
-  obtain ⟨chunk, mid2, h_chunk, h_next2⟩ := Parser.bind_run_success h_next1
-
-  revert h_next2
+  revert h
   split
   · next items h_loop_len h_match =>
-    intro h_next2
+    intro h
 
-    obtain ⟨h_sl, h_rest⟩ := Parser.pure_run_success h_next2
-    subst h_rest
+    finish_parser h → h_sl
 
-    have h_rec_len   := Codec.reconstruct h_len
-    have h_rec_chunk := Parser.bytesWithProof_reconstruct h_chunk
+    have h_rec_len   := Codec.reconstruct h_lenVal
+    have h_rec_chunk := Parser.bytesWithProof_reconstruct h_chunkVal
     have h_rec_loop  :=
       ChunkItem.parseChunkLoop_reconstruct h_loop_len h_match
 

@@ -1,5 +1,6 @@
 import LeanMqtt.Primitives.Proofs
 import LeanMqtt.Primitives.SizedList.Basic
+import LeanMqtt.Helpers.ParserTactics
 import LeanMqtt.Packets.VarHeader.Property.Basic
 
 namespace Mqtt
@@ -46,13 +47,12 @@ theorem Property.reconstruct {p : Property} {input rest : List UInt8} :
   simp only [Property.parser, Property.serialize]
   intro h
 
-  obtain ⟨id, mid, h_id, h_next⟩ := Parser.bind_run_success h
-  obtain ⟨val, mid2, h_val, h_next2⟩ := Parser.bind_run_success h_next
-  obtain ⟨h_p, h_rest⟩ := Parser.pure_run_success h_next2
+  step_parser h → idVal rest1 h_idVal
+  step_parser h → valVal rest2 h_valVal
+  finish_parser h → h_p
 
-  subst h_rest
-  have h_rec_id := VarInt.reconstruct h_id
-  have h_rec_val := Property.reconstruct_kind h_val
+  have h_rec_id := VarInt.reconstruct h_idVal
+  have h_rec_val := Property.reconstruct_kind h_valVal
 
   rw [h_rec_id, h_rec_val, h_p]
   simp [List.append_assoc]

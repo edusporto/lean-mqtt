@@ -2,6 +2,7 @@ import Std.Tactic.BVDecide
 import LeanMqtt.Helpers.Proofs
 import LeanMqtt.Helpers.NatifyUInt8
 import LeanMqtt.Helpers.CrushLits
+import LeanMqtt.Helpers.ParserTactics
 
 import LeanMqtt.Core.Parser.Proofs
 import LeanMqtt.Core.Codec
@@ -45,16 +46,11 @@ theorem UInt16.reconstruct {n : UInt16} {input rest : List UInt8} :
   simp only [UInt16.parser, UInt16.serialize]
   intro h
 
-  obtain ⟨b1, mid, h_b1, h_next1⟩ := Parser.bind_run_success h
-  obtain ⟨b2, mid2, h_b2, h_next2⟩ := Parser.bind_run_success h_next1
-  obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next2
+  step_parser h → byte1 rest1 h_byte1
+  step_parser h → byte2 rest2 h_byte2
+  finish_parser h → h_result
 
-  subst h_rest h_n
-
-  have h_rec1 := UInt8.reconstruct h_b1
-  have h_rec2 := UInt8.reconstruct h_b2
-
-  rw [h_rec1, h_rec2]
+  rw [UInt8.reconstruct h_byte1, UInt8.reconstruct h_byte2]
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
 
@@ -73,20 +69,17 @@ theorem UInt32.reconstruct {n : UInt32} {input rest : List UInt8} :
   simp only [UInt32.parser, UInt32.serialize]
   intro h
 
-  obtain ⟨b1, mid1, h_b1, h_next1⟩ := Parser.bind_run_success h
-  obtain ⟨b2, mid2, h_b2, h_next2⟩ := Parser.bind_run_success h_next1
-  obtain ⟨b3, mid3, h_b3, h_next3⟩ := Parser.bind_run_success h_next2
-  obtain ⟨b4, mid4, h_b4, h_next4⟩ := Parser.bind_run_success h_next3
-  obtain ⟨h_n, h_rest⟩ := Parser.pure_run_success h_next4
+  step_parser h → byte1 rest1 h_byte1
+  step_parser h → byte2 rest2 h_byte2
+  step_parser h → byte3 rest3 h_byte3
+  step_parser h → byte4 rest4 h_byte4
+  finish_parser h → h_result
 
-  subst h_rest h_n
+  rw [UInt8.reconstruct h_byte1,
+      UInt8.reconstruct h_byte2,
+      UInt8.reconstruct h_byte3,
+      UInt8.reconstruct h_byte4]
 
-  have h_rec1 := UInt8.reconstruct h_b1
-  have h_rec2 := UInt8.reconstruct h_b2
-  have h_rec3 := UInt8.reconstruct h_b3
-  have h_rec4 := UInt8.reconstruct h_b4
-
-  rw [h_rec1, h_rec2, h_rec3, h_rec4]
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
 
@@ -160,15 +153,14 @@ theorem String.reconstructWithProof {len : Nat} {s : { s : String // s.utf8ByteS
 
   simp only [String.parserWithProof, String.serialize]
   intro h
-  obtain ⟨bytes_val, mid, h_bytes, h_next⟩ := Parser.bind_run_success h
+  step_parser h → bytesVal rest1 h_bytesVal
 
-  split at h_next
+  split at h
   · next h_valid =>
-    obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success h_next
-    subst h_rest
+    finish_parser h → h_result
 
-    have h_rec := Parser.bytesWithProof_reconstruct h_bytes
-    rw [h_rec, h_s]
+    have h_rec := Parser.bytesWithProof_reconstruct h_bytesVal
+    rw [h_rec, h_result]
 
     simp [String.fromUTF8, String.toUTF8_eq_toByteArray, Helpers.list_bytearray_roundtrip]
   · contradiction
@@ -205,20 +197,9 @@ theorem String.parserWithProof_eq_parser_success {n : Nat} {s : String}
 
 theorem Str.roundtrip (s : Str) (rest : List UInt8) :
     Str.parser.run (s.serialize ++ rest) = some (s, rest) := by
-  simp only [Str.parser, Str.serialize]
-  simp only [
-    bind_pure_comp, List.append_assoc, StateT.run_bind, StateT.run_map,
-    Option.map_eq_map, Option.bind_eq_bind
-  ]
+  simp [Str.parser, Str.serialize]
 
-  rw [UInt16.roundtrip s.len.val]
-  simp only [Option.bind_some, Option.map]
-
-  have h_len_eq : s.len.val.toNat = s.val.serialize.length := by
-    rw [String.serialize_len]
-    have h := s.len.property
-    -- simp [Coe.coe, GetByteSize.byteSize] at h
-    exact h
+  simp [UInt16.roundtrip s.len.val, Option.map]
 
   /-
     To use the String.roundtrip theorem, we need to substitute `s.len.val.toNat`
@@ -230,7 +211,11 @@ theorem Str.roundtrip (s : Str) (rest : List UInt8) :
   -/
   have h_simple := @String.roundtrip s.val rest
 
+  have h_len_eq : s.len.val.toNat = s.val.serialize.length := by
+    rw [String.serialize_len]
+    exact s.len.property
   rw [←h_len_eq] at h_simple
+
   have ⟨_, h_dep⟩ := String.parserWithProof_eq_parser_success h_simple
 
   rw [h_dep]
@@ -241,15 +226,11 @@ theorem Str.reconstruct {s : Str} {input rest : List UInt8} :
   simp only [Str.parser, Str.serialize]
   intro h
 
-  obtain ⟨len, mid, h_len, h_next⟩ := Parser.bind_run_success h
-  obtain ⟨str_val, mid2, h_str, h_next2⟩ := Parser.bind_run_success h_next
-  obtain ⟨h_s, h_rest⟩ := Parser.pure_run_success h_next2
+  step_parser h → lenVal rest1 h_lenVal
+  step_parser h → strVal rest2 h_strVal
+  finish_parser h → h_result
 
-  subst h_rest
-  have h_rec_len := UInt16.reconstruct h_len
-  have h_rec_str := String.reconstructWithProof h_str
-
-  rw [h_rec_len, h_rec_str, h_s]
+  rw [UInt16.reconstruct h_lenVal, String.reconstructWithProof h_strVal, h_result]
   simp [List.append_assoc]
 
 theorem StrPair.roundtrip (p : StrPair) {rest : List UInt8} :
@@ -262,16 +243,14 @@ theorem StrPair.reconstruct {p : StrPair} {input rest : List UInt8} :
   simp only [StrPair.parser, StrPair.serialize]
   intro h
 
-  obtain ⟨s1, mid1, h_s1, h_next1⟩ := Parser.bind_run_success h
-  obtain ⟨s2, mid2, h_s2, h_next2⟩ := Parser.bind_run_success h_next1
+  step_parser h → s1Val rest1 h_s1Val
+  step_parser h → s2Val rest2 h_s2Val
+  finish_parser h → h_result
 
-  obtain ⟨h_p, h_rest⟩ := Parser.pure_run_success h_next2
-  subst h_p h_rest
+  subst h_result
 
-  have rec1 := Str.reconstruct h_s1
-  have rec2 := Str.reconstruct h_s2
-
-  rw [rec1, rec2, List.append_assoc]
+  rw [Str.reconstruct h_s1Val, Str.reconstruct h_s2Val]
+  simp [List.append_assoc]
 
 theorem BinaryData.roundtrip (b : BinaryData) {rest : List UInt8} :
     BinaryData.parser.run (b.serialize ++ rest) = some (b, rest) := by
@@ -303,15 +282,13 @@ theorem BinaryData.reconstruct {b : BinaryData} {input rest : List UInt8} :
   simp only [BinaryData.parser, BinaryData.serialize]
   intro h
 
-  obtain ⟨len, mid, h_len, h_next⟩ := Parser.bind_run_success h
-  obtain ⟨bytes_val, mid2, h_bytes, h_next2⟩ := Parser.bind_run_success h_next
-  obtain ⟨h_b, h_rest⟩ := Parser.pure_run_success h_next2
+  step_parser h → lenVal rest1 h_lenVal
+  step_parser h → bytesVal rest2 h_bytesVal
+  finish_parser h → h_result
 
-  subst h_rest
-  have h_rec_len := UInt16.reconstruct h_len
-  have h_rec_bytes := Parser.bytesWithProof_reconstruct h_bytes
-
-  rw [h_rec_len, h_rec_bytes, h_b]
+  rw [UInt16.reconstruct h_lenVal,
+      Parser.bytesWithProof_reconstruct h_bytesVal,
+      h_result]
   simp [List.append_assoc]
 
 theorem VarInt.roundtrip (v : VarInt) {rest : List UInt8} :
