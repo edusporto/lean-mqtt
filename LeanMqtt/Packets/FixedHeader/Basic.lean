@@ -43,7 +43,7 @@ structure PublishFlags where
 deriving Repr, BEq
 
 /-- A simple type alias for bits that must match a specific constant value. -/
-abbrev ConstBits (bits : Nat) (v : BitVec bits) := { b : BitVec bits // b = v }
+abbrev ConstBits (nBits : Nat) (v : BitVec nBits) := { b : BitVec nBits // b = v }
 
 def PktFlags : PktKind → Type
   | .connect     => ConstBits 4 0b0000
