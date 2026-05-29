@@ -39,10 +39,7 @@ def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [Codec α] [ChunkItem 
   (input : List UInt8) :
   Option { ps : List α // input.length = (ps.map GetByteSize.byteSize).sum } :=
   if h_empty : input.isEmpty then
-    some ⟨[], by
-      have h_len_zero : input.length = 0 := by grind
-      simp [h_len_zero]
-    ⟩
+    some ⟨[], by simp; grind⟩
   else
     match h_parse : (Codec.parser : Parser α).run input with
     | some (item, rest) =>
