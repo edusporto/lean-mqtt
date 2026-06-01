@@ -7,11 +7,11 @@ import LeanMqtt.Helpers.ParserTactics
 namespace Mqtt
 open Mqtt
 
-theorem PktKind.decode_encode (k : PktKind) :
+theorem PktKind.roundtrip (k : PktKind) :
     PktKind.decode? k.encode = some k := by
   cases k <;> rfl
 
-theorem PktFlags.encode_decode (k : PktKind) (f : PktFlags k) :
+theorem PktFlags.roundtrip (k : PktKind) (f : PktFlags k) :
     PktFlags.decode? k (PktFlags.encode k f) = some f := by
   cases k
   case publish =>
@@ -30,13 +30,13 @@ theorem PktFlags.encode_decode (k : PktKind) (f : PktFlags k) :
     simp [encode, decode?, hval]
   }
 
-theorem PktKind.decode_eq_encode {b : BitVec 4} {k : PktKind} :
+theorem PktKind.reconstruct {b : BitVec 4} {k : PktKind} :
     PktKind.decode? b = some k → b = k.encode := by
   intro h
   unfold PktKind.decode? at h
   split at h <;> cases h <;> rfl
 
-theorem PktFlags.decode_eq_encode {k : PktKind} {b : BitVec 4} {f : PktFlags k} :
+theorem PktFlags.reconstruct {k : PktKind} {b : BitVec 4} {f : PktFlags k} :
     PktFlags.decode? k b = some f → b = PktFlags.encode k f := by
   intro h
 
@@ -68,7 +68,7 @@ theorem FixedHeader.roundtrip (header : FixedHeader) {rest : List UInt8} :
   have h_lower : BitVec.extractLsb 3 0 reading = PktFlags.encode header.kind header.flags := by bv_decide
   rw [h_upper, h_lower]
 
-  simp [PktKind.decode_encode, PktFlags.encode_decode, VarInt.roundtrip]
+  simp [PktKind.roundtrip, PktFlags.roundtrip, VarInt.roundtrip]
 
 theorem FixedHeader.reconstruct {header : FixedHeader} {input rest : List UInt8} :
     FixedHeader.parser.run input = some (header, rest) →
@@ -97,15 +97,11 @@ theorem FixedHeader.reconstruct {header : FixedHeader} {input rest : List UInt8}
   rw [UInt8.reconstruct h_byteVal, VarInt.reconstruct h_sizeVal]
   simp only [UInt8.serialize, List.append_assoc]
 
-  -- Prove the 8-bit vector equals the concatenated 4-bit vectors
-  have h_byte_bv : byteVal.toBitVec = (kindVal.encode ++ PktFlags.encode kindVal flagsVal) := by
-    have h_k_eq := PktKind.decode_eq_encode h_k_opt
-    have h_f_eq := PktFlags.decode_eq_encode h_f_opt
-    rw [←h_k_eq, ←h_f_eq]
-    bv_decide
-
   -- Substitute the BitVec equality to prove the UInt8 byte matches
   have h_byte_eq : byteVal = UInt8.ofBitVec (kindVal.encode ++ PktFlags.encode kindVal flagsVal) := by
+    have h_byte_bv : byteVal.toBitVec = (kindVal.encode ++ PktFlags.encode kindVal flagsVal) := by
+      rw [← PktKind.reconstruct h_k_opt, ← PktFlags.reconstruct h_f_opt]
+      bv_decide
     rw [←h_byte_bv]
 
   rw [h_byte_eq]
