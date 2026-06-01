@@ -13,6 +13,6 @@ class Codec (α : Type) where
 
 class LawfulCodec (α : Type) [Codec α] where
   roundtrip : ∀ (a : α) {rest : List UInt8},
-    (Codec.parser (α := α)).run (Codec.serialize a ++ rest) = some (a, rest)
+    Codec.parser.run (Codec.serialize a ++ rest) = some (a, rest)
   reconstruct : ∀ {a : α} {input rest : List UInt8},
-    (Codec.parser (α := α)).run input = some (a, rest) → input = Codec.serialize a ++ rest
+    Codec.parser.run input = some (a, rest) → input = Codec.serialize a ++ rest

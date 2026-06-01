@@ -53,10 +53,7 @@ theorem Property.reconstruct {p : Property} {input rest : List UInt8} :
   step_parser h → valVal rest2 h_valVal
   finish_parser h → h_p
 
-  have h_rec_id := VarInt.reconstruct h_idVal
-  have h_rec_val := Property.reconstruct_kind h_valVal
-
-  rw [h_rec_id, h_rec_val, h_p]
+  rw [VarInt.reconstruct h_idVal, Property.reconstruct_kind h_valVal, h_p]
   simp [List.append_assoc]
 
 theorem Property.parser_len_consumed {p : Property} {input rest : List UInt8} :
