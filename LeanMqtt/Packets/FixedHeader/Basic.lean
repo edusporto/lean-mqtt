@@ -114,6 +114,8 @@ def FixedHeader.serialize (h : FixedHeader) : List UInt8 :=
 
 def FixedHeader.parser : Parser FixedHeader := do
   let byte ← UInt8.parser
+  -- TODO: explore how we could create a custom BitVec primitive
+  --       to improve proofs
   let bv := byte.toBitVec
 
   let kindBits  := bv.extractLsb 7 4
