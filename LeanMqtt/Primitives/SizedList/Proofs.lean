@@ -106,25 +106,22 @@ theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
         split at h_parse
         · -- Item parse succeeded
           next item mid h_item_parse =>
-            split at h_parse
-            · -- Tail parse succeeded
-              next tail h_tail_len h_tail_parse =>
-                -- Extract the equalities from the Subtype
-                injection h_parse with h_eq
-                injection h_eq with h_items
-                injection h_items with h_a h_as
-                subst h_a h_as
+            step_option h_parse → tail_val h_tail_parse
+            obtain ⟨tail, h_tail_len⟩ := tail_val
 
-                -- Reconstruct the head
-                have h_rec_item := LawfulCodec.reconstruct h_item_parse
+            simp at h_parse
+            obtain ⟨h_a, h_as⟩ := h_parse
+            subst h_a h_as
 
-                -- Use the induction hypothesis for the tail directly
-                have h_rec_tail := ih h_tail_len h_tail_parse
+            -- Reconstruct the head
+            have h_rec_item := LawfulCodec.reconstruct h_item_parse
 
-                -- Substitute and finish
-                rw [h_rec_item, h_rec_tail]
-                simp [List.flatMap_cons]
-            · contradiction
+            -- Use the induction hypothesis for the tail directly
+            have h_rec_tail := ih h_tail_len h_tail_parse
+
+            -- Substitute and finish
+            rw [h_rec_item, h_rec_tail]
+            simp [List.flatMap_cons]
         · contradiction
 
 theorem SizedList.roundtrip {α lenTyp : Type}

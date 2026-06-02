@@ -160,6 +160,23 @@ theorem Parser.bind_run_success
     exact ⟨a, mid, h_p1, h⟩
 
 /--
+  Deconstructs a successful run of a monadic bind (`opt >>= f`) over `Option`.
+
+  If `opt >>= f` succeeds and returns `result`, then the underlying `Option`
+  must have evaluated to `some midVal`, and applying `f` to `midVal` must
+  have succeeded and returned `result`.
+-/
+theorem Option.bind_run_success
+    {α β : Type}
+    {opt : Option α} {f : α → Option β} {result : β} :
+    (opt >>= f) = some result →
+    ∃ midVal, opt = some midVal ∧ f midVal = some result := by
+  intro h
+  cases opt
+  · contradiction
+  · exact ⟨_, rfl, h⟩
+
+/--
   Deconstructs a successful run of `pure val` into its constituent parts.
 
   If parsing `pure val` succeeds and returns `result` along with `rest`,

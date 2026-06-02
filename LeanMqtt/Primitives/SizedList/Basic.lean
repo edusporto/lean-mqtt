@@ -37,22 +37,21 @@ class ChunkItem (α : Type) [GetByteSize α] [c : Codec α] where
 -/
 def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [Codec α] [ChunkItem α]
   (input : List UInt8) :
-  Option { ps : List α // input.length = (ps.map GetByteSize.byteSize).sum } :=
+  Option { ps : List α // input.length = (ps.map GetByteSize.byteSize).sum } := do
   if h_empty : input.isEmpty then
-    some ⟨[], by simp; grind⟩
+    return ⟨[], by simp [List.nil_of_isEmpty h_empty]⟩
   else
     match h_parse : (Codec.parser : Parser α).run input with
     | some (item, rest) =>
-      match parseChunkLoop rest with
-      | some ⟨tail, h_tail_len⟩ =>
-        let h_len_ps : input.length = ((item :: tail).map GetByteSize.byteSize).sum := by
-          have h_c : input.length = GetByteSize.byteSize item + rest.length :=
-            ChunkItem.h_consumed h_parse
-          rw [h_tail_len] at h_c
-          exact h_c
+      let ⟨tail, h_tail_len⟩ ← parseChunkLoop rest
 
-        some ⟨(item :: tail), h_len_ps⟩
-      | none => none
+      let h_len_ps : input.length = ((item :: tail).map GetByteSize.byteSize).sum := by
+        have h_c : input.length = GetByteSize.byteSize item + rest.length :=
+          ChunkItem.h_consumed h_parse
+        rw [h_tail_len] at h_c
+        exact h_c
+
+      return ⟨(item :: tail), h_len_ps⟩
     | none => none
 termination_by input.length
 decreasing_by
