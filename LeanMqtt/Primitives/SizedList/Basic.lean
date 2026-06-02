@@ -89,12 +89,9 @@ def SizedList.parser {α lenTyp : Type}
   let len : lenTyp ← Codec.parser
   let ⟨chunk, h_chunk_len⟩ ← Parser.bytesWithProof (len : Nat)
 
-  -- TODO: change to monadic ←
-  match ChunkItem.parseChunkLoop chunk with
-  | some ⟨items, h_loop_len⟩ =>
-    have h_len : (items.map GetByteSize.byteSize).sum = len := by
-      rw [← h_loop_len]
-      exact h_chunk_len
+  let ⟨items, h_loop_len⟩ ← ChunkItem.parseChunkLoop chunk
+  have h_len : (items.map GetByteSize.byteSize).sum = len := by
+    rw [← h_loop_len]
+    exact h_chunk_len
 
-    return { val := items, len := ⟨len, h_len⟩ }
-  | none => none
+  return { val := items, len := ⟨len, h_len⟩ }

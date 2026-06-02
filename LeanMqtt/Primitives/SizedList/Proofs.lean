@@ -153,7 +153,7 @@ theorem SizedList.roundtrip {α lenTyp : Type}
   have ⟨h_loop_proof, h_loop_eq⟩ := ChunkItem.parseChunkLoop_roundtrip sl.val
   rw [h_loop_eq]
 
-  simp
+  simp [ChunkItem.serialize_length]
 
 theorem SizedList.reconstruct {α lenTyp : Type}
     [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
@@ -167,24 +167,18 @@ theorem SizedList.reconstruct {α lenTyp : Type}
 
   step_parser h → lenVal rest1 h_lenVal
   step_parser h → chunkVal rest2 h_chunkVal
+  step_parser h → loopVal rest3 h_loopVal
+  finish_parser h → h_sl
 
-  revert h
-  split
-  · next items h_loop_len h_match =>
-    intro h
+  finish_parser h_loopVal → h_match
+  obtain ⟨items, h_loop_len⟩ := loopVal
 
-    finish_parser h → h_sl
+  have h_rec_len   := LawfulCodec.reconstruct h_lenVal
+  have h_rec_chunk := Parser.bytesWithProof_reconstruct h_chunkVal
+  have h_rec_loop  :=
+    ChunkItem.parseChunkLoop_reconstruct h_loop_len h_match
 
-    have h_rec_len   := LawfulCodec.reconstruct h_lenVal
-    have h_rec_chunk := Parser.bytesWithProof_reconstruct h_chunkVal
-    have h_rec_loop  :=
-      ChunkItem.parseChunkLoop_reconstruct h_loop_len h_match
+  rw [h_rec_len, h_rec_chunk, h_rec_loop]
+  rw [h_sl]
 
-    rw [h_rec_len, h_rec_chunk, h_rec_loop]
-
-    rw [h_sl]
-
-    simp [List.append_assoc]
-
-  · intro h_fail
-    contradiction
+  simp [List.append_assoc]
