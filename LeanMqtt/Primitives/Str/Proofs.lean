@@ -137,7 +137,7 @@ theorem Str.roundtrip (s : Str) (rest : List UInt8) :
 
   have h_len_eq : s.len.val.toNat = s.val.serialize.length := by
     rw [String.serialize_len]
-    exact s.len.property
+    exact s.len.property.symm
   rw [←h_len_eq] at h_simple
 
   have ⟨_, h_dep⟩ := String.parserWithProof_eq_parser_success h_simple
@@ -186,8 +186,7 @@ theorem BinaryData.roundtrip (b : BinaryData) {rest : List UInt8} :
 
   have h_len_eq : b.len.val.toNat = b.val.toList.length := by
     simp only [Array.length_toList]
-    have h := b.len.property
-    exact h
+    exact b.len.property.symm
 
   /-
     Due to dependent type shenanigans, we can't rewrite the current goal

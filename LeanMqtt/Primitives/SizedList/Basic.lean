@@ -92,9 +92,9 @@ def SizedList.parser {α lenTyp : Type}
   -- TODO: change to monadic ←
   match ChunkItem.parseChunkLoop chunk with
   | some ⟨items, h_loop_len⟩ =>
-    have h_len : (len : Nat) = (items.map GetByteSize.byteSize).sum := by
-      rw [← h_chunk_len]
-      exact h_loop_len
+    have h_len : (items.map GetByteSize.byteSize).sum = len := by
+      rw [← h_loop_len]
+      exact h_chunk_len
 
     return { val := items, len := ⟨len, h_len⟩ }
   | none => none

@@ -19,10 +19,10 @@ structure WithByteSize (α lenTyp) [s : GetByteSize α] [Coe lenTyp Nat] where
   -- TODO: `Coe lenTyp Nat`, possible point of failure?
   -- Example: for lenTyp = Int, `-5`.toNat.toInt ≠ `-5`
   -- Fix: use LengthEmbedding instead of `Coe lenTyp Nat`
-  len : { n : lenTyp // n = s.byteSize val }
+  len : { n : lenTyp // s.byteSize val = n }
 
 @[simp]
 theorem WithByteSize.len_eq {α lenTyp} [GetByteSize α] [Coe lenTyp Nat]
     (w : WithByteSize α lenTyp) :
-    ↑w.len.val = GetByteSize.byteSize w.val :=
+    GetByteSize.byteSize w.val = ↑w.len.val :=
   w.len.property

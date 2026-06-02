@@ -138,13 +138,13 @@ theorem SizedList.roundtrip {α lenTyp : Type}
   rw [LawfulCodec.roundtrip sl.len.val]
   simp
 
-  have h_len_eq : (sl.len.val : Nat) = (sl.val.flatMap Codec.serialize).length := by
+  have h_len_eq : (sl.val.flatMap Codec.serialize).length = sl.len.val := by
     rw [ChunkItem.serialize_list_length]
     exact sl.len_eq
 
   -- Bypass dependent type shenanigans on the byte parser
   have h_simple := Parser.bytes_roundtrip (sl.val.flatMap Codec.serialize) rest
-  rw [←h_len_eq] at h_simple
+  rw [h_len_eq] at h_simple
   have ⟨_, h_dep⟩ := Parser.bytes_imp_bytesWithProof h_simple
 
   rw [h_dep]

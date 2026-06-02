@@ -40,11 +40,7 @@ def Str.serialize (s : Str) : List UInt8 :=
 def Str.parser : Parser Str := do
   let len ← UInt16.parser
   let ⟨str, h⟩ ← String.parserWithProof len.toNat
-
-  have h_len : Coe.coe len = GetByteSize.byteSize str := by
-    simp [Coe.coe, GetByteSize.byteSize]; exact h.symm
-
-  return {val := str, len := ⟨len, h_len⟩ }
+  return { val := str, len := ⟨len, h⟩ }
 
 instance : Codec Str where
   parser := Str.parser
@@ -77,11 +73,7 @@ def BinaryData.parser : Parser BinaryData := do
   let len ← UInt16.parser
   let ⟨l, h⟩ ← Parser.bytesWithProof len.toNat
   let b := l.toArray
-
-  have h_len : Coe.coe len = GetByteSize.byteSize b := by
-    simp [Coe.coe, GetByteSize.byteSize]; apply h.symm
-
-  return {val := b, len := ⟨len, h_len⟩ }
+  return { val := b, len := ⟨len, h⟩ }
 
 instance : Codec BinaryData where
   parser := BinaryData.parser
