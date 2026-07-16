@@ -8,7 +8,7 @@ import LeanMqtt.Packets.VarHeader.Property.Basic
 namespace Mqtt
 open Mqtt
 
-def Property.roundtrip_kind {k : Kind} (val : Property.typeOfKind k) {rest : List UInt8} :
+theorem Property.roundtrip_kind {k : Kind} (val : Property.typeOfKind k) {rest : List UInt8} :
     (Property.parserKind k).run (Property.serializeKind k val ++ rest) = some (val, rest) := by
   simp [Property.parserKind, Property.serializeKind]
   split

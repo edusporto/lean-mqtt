@@ -5,7 +5,7 @@ import LeanMqtt.Helpers.ParserTactics
 
 namespace Mqtt
 
-def Header.roundtrip (h : Header) {rest : List UInt8} :
+theorem Header.roundtrip (h : Header) {rest : List UInt8} :
     Header.parser.run (h.serialize ++ rest) = some (h, rest) := by
   simp [parser, serialize]
   simp [FixedHeader.roundtrip]

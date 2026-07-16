@@ -8,7 +8,7 @@ import LeanMqtt.Packets.VarHeader.Properties.Proofs
 namespace Mqtt
 open Mqtt
 
-def Var_Connect.roundtrip (v : Var_Connect) {rest : List UInt8} :
+theorem Var_Connect.roundtrip (v : Var_Connect) {rest : List UInt8} :
     Var_Connect.parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [Var_Connect.parser, Var_Connect.serialize]
   simp [Str.roundtrip]
