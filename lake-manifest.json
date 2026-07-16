@@ -1,15 +1,16 @@
-{"version": "1.1.0",
+{"version": "1.2.0",
  "packagesDir": ".lake/packages",
  "packages":
  [{"url": "https://github.com/leanprover-community/batteries",
    "type": "git",
    "subDir": null,
    "scope": "leanprover-community",
-   "rev": "495c008c3e3f4fb4256ff5582ddb3abf3198026f",
+   "rev": "023ce7d62a0531e22a5331e20b587817a80d49ff",
    "name": "batteries",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "495c008c3e3f4fb4256ff5582ddb3abf3198026f",
+   "inputRev": "023ce7d62a0531e22a5331e20b587817a80d49ff",
    "inherited": false,
    "configFile": "lakefile.toml"}],
  "name": "LeanMqtt",
- "lakeDir": ".lake"}
+ "lakeDir": ".lake",
+ "fixedToolchain": false}
