@@ -36,8 +36,8 @@ class ChunkItem (α : Type) [GetByteSize α] [c : Codec α] where
   byte sizes exactly matches the original length of the input.
 -/
 def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [Codec α] [ChunkItem α]
-  (input : List UInt8) :
-  Option { ps : List α // input.length = (ps.map GetByteSize.byteSize).sum } := do
+    (input : List UInt8) :
+    Option { ps : List α // input.length = (ps.map GetByteSize.byteSize).sum } := do
   if h_empty : input.isEmpty then
     return ⟨[], by simp [List.nil_of_isEmpty h_empty]⟩
   else
@@ -73,9 +73,8 @@ abbrev SizedList (α lenTyp : Type) [GetByteSize α] [Coe lenTyp Nat] :=
   and `ChunkItem` for the elements.
 -/
 def SizedList.serialize {α lenTyp : Type}
-  [GetByteSize α] [Coe lenTyp Nat] [Codec α] [ChunkItem α] [Codec lenTyp]
-  (sl : SizedList α lenTyp) : List UInt8 :=
-
+    [GetByteSize α] [Coe lenTyp Nat] [Codec α] [ChunkItem α] [Codec lenTyp]
+    (sl : SizedList α lenTyp) : List UInt8 :=
   Codec.serialize sl.len.val ++ sl.val.flatMap Codec.serialize
 
 /--

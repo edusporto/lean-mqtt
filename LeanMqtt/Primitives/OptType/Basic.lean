@@ -8,8 +8,8 @@ open Mqtt
   It evaluates definitionally to `α` when `b` is `true`, and `Unit` when `b` is `false`.
 
   At first glance, using `Bool` instead of  `Prop` might seem like it may wield incorrect
-  results. What prevents a buggy parser from evaluating always passing `false` and breaking
-  the protocol?
+  results. It seems like a buggy parser may evaluate by always passing `false`, breaking
+  the protocol.
 
   The guarantee is preserved because the boolean is embedded directly into the type
   signature of the parent structure.
@@ -18,9 +18,8 @@ open Mqtt
   ```
   packet_id : OptType UInt16 (qos.val > 0)
   ```
-
   Any parser or serializer that passes a different condition will yield a mismatched type
-  (e.g., `OptType UInt16 false`). Lean's typechecker will catch this mismatch and reject
+  (e.g., `OptType UInt16 false`). Lean's type checking will catch this mismatch and reject
   the implementation.
 -/
 abbrev OptType (α : Type) (b : Bool) : Type :=

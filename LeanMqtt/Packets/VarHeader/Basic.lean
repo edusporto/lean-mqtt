@@ -31,8 +31,8 @@ def VarHeader.getType (kind : PktKind) (flags : PktFlags kind) : Type :=
   | .auth, _        => Var_Auth
 
 def VarHeader.serializeValue
-  {kind : PktKind} {flags : PktFlags kind}
-  (value : VarHeader.getType kind flags) : List UInt8 :=
+    {kind : PktKind} {flags : PktFlags kind}
+    (value : VarHeader.getType kind flags) : List UInt8 :=
   match kind, flags with
   | .connect, _     => Var_Connect.serialize value
   | .connack, _     => Var_Connack.serialize value
@@ -51,8 +51,8 @@ def VarHeader.serializeValue
   | .auth, _        => Var_Auth.serialize value
 
 def VarHeader.parserValue
-  (kind : PktKind) (flags : PktFlags kind)
-  : Parser (VarHeader.getType kind flags) :=
+    (kind : PktKind) (flags : PktFlags kind)
+    : Parser (VarHeader.getType kind flags) :=
   match kind, flags with
   | .connect, _     => Var_Connect.parser
   | .connack, _     => Var_Connack.parser
