@@ -1,6 +1,8 @@
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Primitives.Str.Basic
 import LeanMqtt.Primitives.OptType.Basic
+import LeanMqtt.Primitives.ConstVal.Basic
+import LeanMqtt.Primitives.PredType.Basic
 import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Packets.VarHeader.Properties.Basic
 
@@ -9,10 +11,38 @@ open Mqtt
 
 /- ========================= Var_Connect ========================= -/
 
+abbrev ConnectFlagsProp (b : UInt8) : Prop :=
+  let bv := b.toBitVec
+  let reserved    := bv.extractLsb 0 0
+  let will_flag   := bv.extractLsb 2 2
+  let will_qos    := bv.extractLsb 4 3
+  let will_retain := bv.extractLsb 5 5
+  
+  (reserved = 0) ∧ 
+  (will_flag = 0 → will_qos = 0 ∧ will_retain = 0) ∧
+  (will_qos ≠ 3)
+
+abbrev ConnectFlags := PredType ConnectFlagsProp
+
+def ConnectFlags.clean_start (f : ConnectFlags) : Bool := f.val.toBitVec.extractLsb 1 1 = 1
+def ConnectFlags.will_flag   (f : ConnectFlags) : Bool := f.val.toBitVec.extractLsb 2 2 = 1
+def ConnectFlags.will_qos    (f : ConnectFlags) : QoSBits := 
+  -- We extract the proof from f.property
+  let qos := f.val.toBitVec.extractLsb 4 3
+  ⟨qos, f.property.2.2⟩
+def ConnectFlags.will_retain (f : ConnectFlags) : Bool := f.val.toBitVec.extractLsb 5 5 = 1
+def ConnectFlags.password    (f : ConnectFlags) : Bool := f.val.toBitVec.extractLsb 6 6 = 1
+def ConnectFlags.username    (f : ConnectFlags) : Bool := f.val.toBitVec.extractLsb 7 7 = 1
+
 structure Var_Connect where
-  protocol_name    : Str
-  protocol_version : UInt8
-  connect_flags    : UInt8
+  -- TODO: As per MQTT-3.1.2-2, the server may decide to respond when the
+  -- protocol name (or other structures) is malformed. We can deal with
+  -- this in two ways:
+  -- 1. Implement a type for "may fail"
+  -- 2. Specify this in a parser error (need to move away from `Option`)
+  protocol_name    : ConstVal Str (WithByteSize.of "MQTT")
+  protocol_version : ConstVal UInt8 5
+  connect_flags    : ConnectFlags
   props            : Properties
 
 def Var_Connect.serialize (v : Var_Connect) : List UInt8 :=
@@ -22,9 +52,9 @@ def Var_Connect.serialize (v : Var_Connect) : List UInt8 :=
   v.props.serialize
 
 def Var_Connect.parser : Parser Var_Connect := do
-  let protocol_name ← Str.parser
-  let protocol_version ← UInt8.parser
-  let connect_flags ← UInt8.parser
+  let protocol_name ← ConstVal.parser (WithByteSize.of "MQTT")
+  let protocol_version ← ConstVal.parser (5 : UInt8)
+  let connect_flags ← PredType.parser ConnectFlagsProp
   let props ← Properties.parser
   return { protocol_name, protocol_version, connect_flags, props }
 

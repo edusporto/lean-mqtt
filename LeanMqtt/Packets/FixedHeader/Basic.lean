@@ -44,21 +44,21 @@ structure PublishFlags where
 deriving Repr, BEq
 
 def PktFlags : PktKind → Type
-  | .connect     => ConstVal (0b0000#4)
-  | .connack     => ConstVal (0b0000#4)
+  | .connect     => ConstVal (BitVec 4) (0b0000)
+  | .connack     => ConstVal (BitVec 4) (0b0000)
   | .publish     => PublishFlags
-  | .puback      => ConstVal (0b0000#4)
-  | .pubrec      => ConstVal (0b0000#4)
-  | .pubrel      => ConstVal (0b0010#4)
-  | .pubcomp     => ConstVal (0b0000#4)
-  | .subscribe   => ConstVal (0b0010#4)
-  | .suback      => ConstVal (0b0000#4)
-  | .unsubscribe => ConstVal (0b0010#4)
-  | .unsuback    => ConstVal (0b0000#4)
-  | .pingreq     => ConstVal (0b0000#4)
-  | .pingresp    => ConstVal (0b0000#4)
-  | .disconnect  => ConstVal (0b0000#4)
-  | .auth        => ConstVal (0b0000#4)
+  | .puback      => ConstVal (BitVec 4) (0b0000)
+  | .pubrec      => ConstVal (BitVec 4) (0b0000)
+  | .pubrel      => ConstVal (BitVec 4) (0b0010)
+  | .pubcomp     => ConstVal (BitVec 4) (0b0000)
+  | .subscribe   => ConstVal (BitVec 4) (0b0010)
+  | .suback      => ConstVal (BitVec 4) (0b0000)
+  | .unsubscribe => ConstVal (BitVec 4) (0b0010)
+  | .unsuback    => ConstVal (BitVec 4) (0b0000)
+  | .pingreq     => ConstVal (BitVec 4) (0b0000)
+  | .pingresp    => ConstVal (BitVec 4) (0b0000)
+  | .disconnect  => ConstVal (BitVec 4) (0b0000)
+  | .auth        => ConstVal (BitVec 4) (0b0000)
 
 def PktFlags.encode : (k : PktKind) → PktFlags k → BitVec 4
   | .publish, f     => f.dup ++ f.qos.val ++ f.retain

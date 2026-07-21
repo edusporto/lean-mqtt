@@ -6,7 +6,7 @@ namespace Mqtt
 open Mqtt
 
 theorem ConstVal.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] [DecidableEq α]
-    (expected : α) (v : ConstVal expected) {rest : List UInt8} :
+    (expected : α) (v : ConstVal α expected) {rest : List UInt8} :
     (ConstVal.parser expected).run (ConstVal.serialize v ++ rest) = some (v, rest) := by
   unfold ConstVal.parser ConstVal.serialize
   cases v with
@@ -19,7 +19,7 @@ theorem ConstVal.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] [Decidabl
     rfl
 
 theorem ConstVal.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] [DecidableEq α]
-    (expected : α) {v : ConstVal expected} {input rest : List UInt8} :
+    (expected : α) {v : ConstVal α expected} {input rest : List UInt8} :
     (ConstVal.parser expected).run input = some (v, rest) → input = ConstVal.serialize v ++ rest := by
   unfold ConstVal.parser ConstVal.serialize
   intro h

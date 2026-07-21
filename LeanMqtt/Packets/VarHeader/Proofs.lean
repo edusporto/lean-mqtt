@@ -1,6 +1,8 @@
 import LeanMqtt.Primitives.UInt.Proofs
 import LeanMqtt.Primitives.Str.Proofs
 import LeanMqtt.Primitives.OptType.Proofs
+import LeanMqtt.Primitives.ConstVal.Proofs
+import LeanMqtt.Primitives.PredType.Proofs
 import LeanMqtt.Helpers.ParserTactics
 import LeanMqtt.Packets.VarHeader.Variations
 import LeanMqtt.Packets.VarHeader.Properties.Proofs
@@ -11,8 +13,8 @@ open Mqtt
 theorem Var_Connect.roundtrip (v : Var_Connect) {rest : List UInt8} :
     Var_Connect.parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [Var_Connect.parser, Var_Connect.serialize]
-  simp [Str.roundtrip]
-  simp [UInt8.roundtrip]
+  simp [ConstVal.roundtrip]
+  simp [PredType.roundtrip]
   simp [Properties.roundtrip]
 
 theorem Var_Connect.reconstruct
@@ -26,9 +28,9 @@ theorem Var_Connect.reconstruct
   step_parser h → propsVal rest4 h_propsVal
   finish_parser h → h_v
   subst h_v
-  rw [Str.reconstruct h_p_nameVal,
-    UInt8.reconstruct h_p_verVal,
-    UInt8.reconstruct h_c_flagsVal,
+  rw [ConstVal.reconstruct _ h_p_nameVal,
+    ConstVal.reconstruct _ h_p_verVal,
+    PredType.reconstruct ConnectFlagsProp h_c_flagsVal,
     Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 

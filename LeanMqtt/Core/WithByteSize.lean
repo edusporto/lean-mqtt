@@ -20,9 +20,20 @@ structure WithByteSize (α lenTyp) [s : GetByteSize α] [Coe lenTyp Nat] where
   -- Example: for lenTyp = Int, `-5`.toNat.toInt ≠ `-5`
   -- Fix: use LengthEmbedding instead of `Coe lenTyp Nat`
   len : { n : lenTyp // s.byteSize val = n }
+deriving DecidableEq
 
 @[simp]
 theorem WithByteSize.len_eq {α lenTyp} [GetByteSize α] [Coe lenTyp Nat]
     (w : WithByteSize α lenTyp) :
     GetByteSize.byteSize w.val = ↑w.len.val :=
   w.len.property
+
+/--
+  Instantiates `WithByteSize` without manually providing the length and the proof.
+  The proof is solved automatically by `rfl` at the call site once the value is instantiated.
+-/
+def WithByteSize.of {α lenTyp} [s : GetByteSize α] [Coe lenTyp Nat]
+    (val : α) [OfNat lenTyp (s.byteSize val)]
+    (h : s.byteSize val = ↑(OfNat.ofNat (s.byteSize val) : lenTyp) := by rfl) :
+    WithByteSize α lenTyp :=
+  ⟨val, ⟨OfNat.ofNat (s.byteSize val), h⟩⟩
