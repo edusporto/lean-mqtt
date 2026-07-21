@@ -4,9 +4,9 @@ import LeanMqtt.Helpers.ParserTactics
 namespace Mqtt
 open Mqtt
 
-theorem PredType.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] {p : α → Prop} [DecidablePred p]
-    (v : PredType p) {rest : List UInt8} :
-    (PredType.parser p).run (PredType.serialize v ++ rest) = some (v, rest) := by
+theorem PredType.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] {gen : α → List Condition}
+    (v : PredType gen) {rest : List UInt8} :
+    (PredType.parser gen).run (PredType.serialize v ++ rest) = some (v, rest) := by
   unfold PredType.parser PredType.serialize
   cases v with
   | mk val property =>
@@ -17,9 +17,9 @@ theorem PredType.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] {p : α �
     rw [dif_pos property]
     rfl
 
-theorem PredType.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] (p : α → Prop) [DecidablePred p]
-    {v : PredType p} {input rest : List UInt8} :
-    (PredType.parser p).run input = some (v, rest) → input = PredType.serialize v ++ rest := by
+theorem PredType.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] (gen : α → List Condition)
+    {v : PredType gen} {input rest : List UInt8} :
+    (PredType.parser gen).run input = some (v, rest) → input = PredType.serialize v ++ rest := by
   unfold PredType.parser PredType.serialize
   intro h
   step_parser h → val rest' h_val

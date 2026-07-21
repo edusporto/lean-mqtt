@@ -30,7 +30,7 @@ theorem Var_Connect.reconstruct
   subst h_v
   rw [ConstVal.reconstruct _ h_p_nameVal,
     ConstVal.reconstruct _ h_p_verVal,
-    PredType.reconstruct ConnectFlagsProp h_c_flagsVal,
+    PredType.reconstruct ConnectFlagsPred h_c_flagsVal,
     Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
