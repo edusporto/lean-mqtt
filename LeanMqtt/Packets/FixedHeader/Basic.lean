@@ -1,5 +1,6 @@
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Primitives.VarInt.Basic
+import LeanMqtt.Primitives.ConstVal.Basic
 
 namespace Mqtt
 open Mqtt
@@ -42,25 +43,22 @@ structure PublishFlags where
   retain : BitVec 1
 deriving Repr, BEq
 
-/-- A simple type alias for bits that must match a specific constant value. -/
-abbrev ConstBits (nBits : Nat) (v : BitVec nBits) := { b : BitVec nBits // b = v }
-
 def PktFlags : PktKind → Type
-  | .connect     => ConstBits 4 0b0000
-  | .connack     => ConstBits 4 0b0000
+  | .connect     => ConstVal (0b0000#4)
+  | .connack     => ConstVal (0b0000#4)
   | .publish     => PublishFlags
-  | .puback      => ConstBits 4 0b0000
-  | .pubrec      => ConstBits 4 0b0000
-  | .pubrel      => ConstBits 4 0b0010
-  | .pubcomp     => ConstBits 4 0b0000
-  | .subscribe   => ConstBits 4 0b0010
-  | .suback      => ConstBits 4 0b0000
-  | .unsubscribe => ConstBits 4 0b0010
-  | .unsuback    => ConstBits 4 0b0000
-  | .pingreq     => ConstBits 4 0b0000
-  | .pingresp    => ConstBits 4 0b0000
-  | .disconnect  => ConstBits 4 0b0000
-  | .auth        => ConstBits 4 0b0000
+  | .puback      => ConstVal (0b0000#4)
+  | .pubrec      => ConstVal (0b0000#4)
+  | .pubrel      => ConstVal (0b0010#4)
+  | .pubcomp     => ConstVal (0b0000#4)
+  | .subscribe   => ConstVal (0b0010#4)
+  | .suback      => ConstVal (0b0000#4)
+  | .unsubscribe => ConstVal (0b0010#4)
+  | .unsuback    => ConstVal (0b0000#4)
+  | .pingreq     => ConstVal (0b0000#4)
+  | .pingresp    => ConstVal (0b0000#4)
+  | .disconnect  => ConstVal (0b0000#4)
+  | .auth        => ConstVal (0b0000#4)
 
 def PktFlags.encode : (k : PktKind) → PktFlags k → BitVec 4
   | .publish, f     => f.dup ++ f.qos.val ++ f.retain
