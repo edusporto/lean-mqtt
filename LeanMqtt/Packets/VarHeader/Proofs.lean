@@ -37,7 +37,7 @@ theorem Var_Connect.reconstruct
 theorem Var_Connack.roundtrip (v : Var_Connack) {rest : List UInt8} :
     Var_Connack.parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [Var_Connack.parser, Var_Connack.serialize]
-  simp [UInt8.roundtrip, Properties.roundtrip]
+  simp [UInt8.roundtrip, Properties.roundtrip, PredType.roundtrip]
 
 theorem Var_Connack.reconstruct {v : Var_Connack} {input rest : List UInt8} :
     Var_Connack.parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -48,7 +48,7 @@ theorem Var_Connack.reconstruct {v : Var_Connack} {input rest : List UInt8} :
   step_parser h → propsVal rest3 h_propsVal
   finish_parser h → h_v
   subst h_v
-  rw [UInt8.reconstruct h_ack_flagsVal,
+  rw [PredType.reconstruct ConnackFlagsProp h_ack_flagsVal,
     UInt8.reconstruct h_rcodeVal,
     Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]

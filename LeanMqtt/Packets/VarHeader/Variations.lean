@@ -61,8 +61,17 @@ def Var_Connect.parser : Parser Var_Connect := do
 
 /- ========================= Var_Connack ========================= -/
 
+def ConnackFlagsProp (b : UInt8) : List Condition :=
+  let bv := b.toBitVec
+  let reserved := bv.extractLsb 7 1
+  [ ensure! reserved = 0 ]
+
+abbrev ConnackFlags := PredType ConnackFlagsProp
+
+def ConnackFlags.session_present (f : ConnackFlags) : Bool := f.val.toBitVec.extractLsb 0 0 = 1
+
 structure Var_Connack where
-  ack_flags   : UInt8
+  ack_flags   : ConnackFlags
   reason_code : UInt8
   props       : Properties
 
@@ -72,7 +81,7 @@ def Var_Connack.serialize (v : Var_Connack) : List UInt8 :=
   v.props.serialize
 
 def Var_Connack.parser : Parser Var_Connack := do
-  let ack_flags   ← UInt8.parser
+  let ack_flags   ← PredType.parser ConnackFlagsProp
   let reason_code ← UInt8.parser
   let props       ← Properties.parser
   return { ack_flags, reason_code, props }
