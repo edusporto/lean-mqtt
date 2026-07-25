@@ -5,6 +5,7 @@ import LeanMqtt.Primitives.ConstVal.Basic
 import LeanMqtt.Primitives.PredType.Basic
 import LeanMqtt.Packets.FixedHeader.Basic
 import LeanMqtt.Packets.VarHeader.Properties.Basic
+import LeanMqtt.Packets.ReasonCode.Basic
 
 namespace Mqtt
 open Mqtt
@@ -72,7 +73,7 @@ def ConnackFlags.session_present (f : ConnackFlags) : Bool := f.val.toBitVec.ext
 
 structure Var_Connack where
   ack_flags   : ConnackFlags
-  reason_code : UInt8
+  reason_code : ReasonCode .connack
   props       : Properties
 
 def Var_Connack.serialize (v : Var_Connack) : List UInt8 :=
@@ -82,7 +83,7 @@ def Var_Connack.serialize (v : Var_Connack) : List UInt8 :=
 
 def Var_Connack.parser : Parser Var_Connack := do
   let ack_flags   ← PredType.parser ConnackFlagsProp
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .connack
   let props       ← Properties.parser
   return { ack_flags, reason_code, props }
 

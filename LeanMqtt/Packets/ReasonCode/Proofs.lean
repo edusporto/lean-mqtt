@@ -1,15 +1,14 @@
 import LeanMqtt.Primitives.UInt.Proofs
 import LeanMqtt.Packets.ReasonCode.Basic
-import LeanMqtt.Helpers.ParserTactics
 
 namespace Mqtt
 
-theorem ReasonCode.byte_roundtrip (rc : ReasonCode) :
-    ReasonCode.decode? (ReasonCode.encode rc) = some rc := by
+theorem GlobalReasonCode.byte_roundtrip (rc : GlobalReasonCode) :
+    GlobalReasonCode.decode? (rc.encode) = some rc := by
   cases rc <;> rfl
 
-theorem ReasonCode.byte_reconstruct {rc : ReasonCode} {b : UInt8} :
-    ReasonCode.decode? b = some rc → ReasonCode.encode rc = b := by
+theorem GlobalReasonCode.byte_reconstruct {rc : GlobalReasonCode} {b : UInt8} :
+    GlobalReasonCode.decode? b = some rc → rc.encode = b := by
   unfold decode? encode
   split
   all_goals {
@@ -18,14 +17,14 @@ theorem ReasonCode.byte_reconstruct {rc : ReasonCode} {b : UInt8} :
     try rfl
   }
 
-theorem ReasonCode.roundtrip (rc : ReasonCode) {rest : List UInt8} :
-    ReasonCode.parser.run (rc.serialize ++ rest) = some (rc, rest) := by
-  simp [ReasonCode.parser, ReasonCode.serialize, ReasonCode.encode, ReasonCode.decode?]
+theorem GlobalReasonCode.roundtrip (rc : GlobalReasonCode) {rest : List UInt8} :
+    GlobalReasonCode.parser.run (rc.serialize ++ rest) = some (rc, rest) := by
+  simp [GlobalReasonCode.parser, GlobalReasonCode.serialize, GlobalReasonCode.encode, GlobalReasonCode.decode?]
   cases rc <;> rfl
 
-theorem ReasonCode.reconstruct {rc : ReasonCode} {input rest : List UInt8} :
-    ReasonCode.parser.run input = some (rc, rest) → input = rc.serialize ++ rest := by
-  simp only [ReasonCode.parser, ReasonCode.serialize]
+theorem GlobalReasonCode.reconstruct {rc : GlobalReasonCode} {input rest : List UInt8} :
+    GlobalReasonCode.parser.run input = some (rc, rest) → input = rc.serialize ++ rest := by
+  simp only [GlobalReasonCode.parser, GlobalReasonCode.serialize]
   intro h
 
   step_parser h → bVal rest1 h_bVal
@@ -34,8 +33,40 @@ theorem ReasonCode.reconstruct {rc : ReasonCode} {input rest : List UInt8} :
 
   rw [UInt8.reconstruct h_bVal]
 
-  have h_byte_eq := ReasonCode.byte_reconstruct h_rcOpt
+  have h_byte_eq := GlobalReasonCode.byte_reconstruct h_rcOpt
   rw [← h_byte_eq]
   rfl
+
+theorem ReasonCode.roundtrip {p : PktKind} (prc : ReasonCode p) {rest : List UInt8} :
+    (ReasonCode.parser p).run (prc.serialize ++ rest) = some (prc, rest) := by
+  simp [ReasonCode.parser, ReasonCode.serialize]
+  have h_rc := GlobalReasonCode.roundtrip prc.val (rest := rest)
+  simp [h_rc]
+  have h_valid : isValidReasonCode p prc.val = true := prc.property
+  split
+  · next h_eq =>
+    congr
+  · next h_neq =>
+    contradiction
+
+theorem ReasonCode.reconstruct {p : PktKind} {prc : ReasonCode p} {input rest : List UInt8} :
+    (ReasonCode.parser p).run input = some (prc, rest) → input = prc.serialize ++ rest := by
+  intro h
+  simp only [ReasonCode.parser, ReasonCode.serialize] at *
+
+  step_parser h → rcVal rest1 h_rcVal
+
+  split at h
+  · next h_valid =>
+    simp [pure] at h
+    injection h with h_pair
+    injection h_pair with h_prc_eq h_rest_eq
+    subst h_rest_eq
+    have h_rc_eq : prc.val = rcVal := by rw [← h_prc_eq]
+    subst h_rc_eq
+
+    exact GlobalReasonCode.reconstruct h_rcVal
+  · next h_invalid =>
+    contradiction
 
 end Mqtt
