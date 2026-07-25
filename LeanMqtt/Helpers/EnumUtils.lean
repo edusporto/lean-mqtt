@@ -28,7 +28,7 @@ syntax enum_variant := "|" ident "=>" num
 A generalized macro to define a simple enum-like inductive type
 along with its `encode` and `decode?` codec functions.
 -/
-def expandEnumWithCodec (name : TSyntax `ident) (type : TSyntax `term) (variants : Array (TSyntax ``enum_variant)) : MacroM (TSyntax `command) := do
+def expandEnumWithCodec (doc? : Option (TSyntax ``Lean.Parser.Command.docComment)) (name : TSyntax `ident) (type : TSyntax `term) (variants : Array (TSyntax ``enum_variant)) : MacroM (TSyntax `command) := do
   let mut indConstructors : Array (TSyntax ``Lean.Parser.Command.ctor) := #[]
   let mut encArms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
   let mut decArms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
@@ -58,6 +58,7 @@ def expandEnumWithCodec (name : TSyntax `ident) (type : TSyntax `term) (variants
   let decodeName := mkIdentFrom name (Name.mkStr name.getId "decode?")
 
   `(
+    $[$doc?:docComment]?
     inductive $name where
       $[$indConstructors:ctor]*
     deriving Repr, DecidableEq, Inhabited
@@ -69,12 +70,16 @@ def expandEnumWithCodec (name : TSyntax `ident) (type : TSyntax `term) (variants
       $[$decArms:matchAlt]*
   )
 
-macro "enum_with_codec" name:ident ":" type:term "where" variants:enum_variant* : command => do
-  expandEnumWithCodec name type variants
+macro doc?:(docComment)? "enum_with_codec" name:ident ":" type:term "where" variants:enum_variant* : command => do
+  expandEnumWithCodec doc? name type variants
 
-elab "enum_with_codec?" name:ident ":" type:term "where" variants:enum_variant* : command => do
-  let stx ← liftMacroM <| expandEnumWithCodec name type variants
-  logInfo m!"{stx}"
+elab doc?:(docComment)? "enum_with_codec?" name:ident ":" type:term "where" variants:enum_variant* : command => do
+  let stx ← liftMacroM <| expandEnumWithCodec doc? name type variants
+  if stx.raw.isOfKind nullKind then
+    for arg in stx.raw.getArgs do
+      logInfo m!"{arg}"
+  else
+    logInfo m!"{stx}"
   elabCommand stx
 
 /-!
@@ -91,7 +96,7 @@ syntax valid_variants_list := ident "=>" "[" ident,* "]"
 A generalized macro that creates a validating function for any two simple inductive types,
 where one is a tag and the other is the set of possible variants for that tag.
 -/
-def expandValidVariants (name tag var : TSyntax `ident) (lists : Array (TSyntax ``valid_variants_list)) : MacroM (TSyntax `command) := do
+def expandValidVariants (doc? : Option (TSyntax ``Lean.Parser.Command.docComment)) (name tag var : TSyntax `ident) (lists : Array (TSyntax ``valid_variants_list)) : MacroM (TSyntax `command) := do
   let mut arms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
 
   for list in lists do
@@ -107,23 +112,23 @@ def expandValidVariants (name tag var : TSyntax `ident) (lists : Array (TSyntax 
   let defaultArm ← `(Lean.Parser.Term.matchAltExpr| | _, _ => false)
   arms := arms.push defaultArm
 
-  let docStr := s!"\n`{name.getId}` is an auto-generated function that checks if a `{var.getId}` is valid against a tag `{tag.getId}` in `O(1)` time.\n "
-  let docNode := mkNode ``Lean.Parser.Command.docComment #[mkAtom "/--", mkAtom docStr, mkAtom "-/"]
-  let doc : TSyntax ``Lean.Parser.Command.docComment := ⟨docNode⟩
-
   `(
-    $doc:docComment
+    $[$doc?:docComment]?
     def $name (tag_val : $tag) (var_val : $var) : Bool :=
       match tag_val, var_val with
       $[$arms:matchAlt]*
   )
 
-macro "valid_variants" name:ident ":" tag:ident "→" var:ident "{" lists:valid_variants_list* "}" : command => do
-  expandValidVariants name tag var lists
+macro doc?:(docComment)? "valid_variants" name:ident ":" tag:ident "→" var:ident "{" lists:valid_variants_list* "}" : command => do
+  expandValidVariants doc? name tag var lists
 
-elab "valid_variants?" name:ident ":" tag:ident "→" var:ident "{" lists:valid_variants_list* "}" : command => do
-  let stx ← liftMacroM <| expandValidVariants name tag var lists
-  logInfo m!"{stx}"
+elab doc?:(docComment)? "valid_variants?" name:ident ":" tag:ident "→" var:ident "{" lists:valid_variants_list* "}" : command => do
+  let stx ← liftMacroM <| expandValidVariants doc? name tag var lists
+  if stx.raw.isOfKind nullKind then
+    for arg in stx.raw.getArgs do
+      logInfo m!"{arg}"
+  else
+    logInfo m!"{stx}"
   elabCommand stx
 
 end Mqtt
