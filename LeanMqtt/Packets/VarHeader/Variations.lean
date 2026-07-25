@@ -116,7 +116,9 @@ def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
 
 structure Var_Puback where
   packet_id   : UInt16
-  reason_code : UInt8
+  -- TODO: The Reason Code and Properties can be omitted if the
+  -- Reason Code is 0x00 (Success) and there are no Properties.
+  reason_code : ReasonCode .puback
   props       : Properties
 
 def Var_Puback.serialize (v : Var_Puback) : List UInt8 :=
@@ -126,7 +128,7 @@ def Var_Puback.serialize (v : Var_Puback) : List UInt8 :=
 
 def Var_Puback.parser : Parser (Var_Puback) := do
   let packet_id ← UInt16.parser
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .puback
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
@@ -134,7 +136,9 @@ def Var_Puback.parser : Parser (Var_Puback) := do
 
 structure Var_Pubrec where
   packet_id   : UInt16
-  reason_code : UInt8
+  -- TODO: The Reason Code and Properties can be omitted if the
+  -- Reason Code is 0x00 (Success) and there are no Properties.
+  reason_code : ReasonCode .pubrec
   props       : Properties
 
 def Var_Pubrec.serialize (v : Var_Pubrec) : List UInt8 :=
@@ -144,7 +148,7 @@ def Var_Pubrec.serialize (v : Var_Pubrec) : List UInt8 :=
 
 def Var_Pubrec.parser : Parser (Var_Pubrec) := do
   let packet_id ← UInt16.parser
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .pubrec
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
@@ -152,7 +156,9 @@ def Var_Pubrec.parser : Parser (Var_Pubrec) := do
 
 structure Var_Pubrel where
   packet_id   : UInt16
-  reason_code : UInt8
+  -- TODO: The Reason Code and Properties can be omitted if the
+  -- Reason Code is 0x00 (Success) and there are no Properties.
+  reason_code : ReasonCode .pubrel
   props       : Properties
 
 def Var_Pubrel.serialize (v : Var_Pubrel) : List UInt8 :=
@@ -162,7 +168,7 @@ def Var_Pubrel.serialize (v : Var_Pubrel) : List UInt8 :=
 
 def Var_Pubrel.parser : Parser (Var_Pubrel) := do
   let packet_id ← UInt16.parser
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .pubrel
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
@@ -170,7 +176,9 @@ def Var_Pubrel.parser : Parser (Var_Pubrel) := do
 
 structure Var_Pubcomp where
   packet_id   : UInt16
-  reason_code : UInt8
+  -- TODO: The Reason Code and Properties can be omitted if the
+  -- Reason Code is 0x00 (Success) and there are no Properties.
+  reason_code : ReasonCode .pubcomp
   props       : Properties
 
 def Var_Pubcomp.serialize (v : Var_Pubcomp) : List UInt8 :=
@@ -180,7 +188,7 @@ def Var_Pubcomp.serialize (v : Var_Pubcomp) : List UInt8 :=
 
 def Var_Pubcomp.parser : Parser (Var_Pubcomp) := do
   let packet_id ← UInt16.parser
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .pubcomp
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
@@ -261,7 +269,9 @@ def Var_Pingresp.parser : Parser (Var_Pingresp) := return ()
 /- ========================= Var_Disconnect ========================= -/
 
 structure Var_Disconnect where
-  reason_code : UInt8
+  -- TODO: The Reason Code and Properties can be omitted if the
+  -- Reason Code is 0x00 (Normal disconnection) and there are no Properties.
+  reason_code : ReasonCode .disconnect
   props       : Properties
 
 def Var_Disconnect.serialize (v : Var_Disconnect) : List UInt8 :=
@@ -269,14 +279,16 @@ def Var_Disconnect.serialize (v : Var_Disconnect) : List UInt8 :=
   v.props.serialize
 
 def Var_Disconnect.parser : Parser (Var_Disconnect) := do
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .disconnect
   let props ← Properties.parser
   return { reason_code, props }
 
 /- ========================= Var_Auth ========================= -/
 
 structure Var_Auth where
-  reason_code : UInt8
+  -- TODO: The Reason Code and Properties can be omitted if the
+  -- Reason Code is 0x00 (Success) and there are no Properties.
+  reason_code : ReasonCode .auth
   props       : Properties
 
 def Var_Auth.serialize (v : Var_Auth) : List UInt8 :=
@@ -284,7 +296,7 @@ def Var_Auth.serialize (v : Var_Auth) : List UInt8 :=
   v.props.serialize
 
 def Var_Auth.parser : Parser (Var_Auth) := do
-  let reason_code ← UInt8.parser
+  let reason_code ← ReasonCode.parser .auth
   let props ← Properties.parser
   return { reason_code, props }
 

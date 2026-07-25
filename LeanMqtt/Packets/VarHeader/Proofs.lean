@@ -78,7 +78,7 @@ theorem Var_Publish.reconstruct {qos : QoSBits} {v : Var_Publish qos} {input res
 theorem Var_Puback.roundtrip (v : Var_Puback) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [Var_Puback.parser, Var_Puback.serialize]
-  simp [UInt16.roundtrip, UInt8.roundtrip, Properties.roundtrip]
+  simp [UInt16.roundtrip, ReasonCode.roundtrip, Properties.roundtrip]
 
 theorem Var_Puback.reconstruct {v : Var_Puback} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -90,14 +90,14 @@ theorem Var_Puback.reconstruct {v : Var_Puback} {input rest : List UInt8} :
   finish_parser h → h_v
   subst h_v
   rw [UInt16.reconstruct h_pidVal,
-      UInt8.reconstruct h_rcodeVal,
+      ReasonCode.reconstruct h_rcodeVal,
       Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pubrec.roundtrip (v : Var_Pubrec) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [parser, serialize]
-  simp [UInt16.roundtrip, UInt8.roundtrip, Properties.roundtrip]
+  simp [UInt16.roundtrip, ReasonCode.roundtrip, Properties.roundtrip]
 
 theorem Var_Pubrec.reconstruct {v : Var_Pubrec} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -109,14 +109,14 @@ theorem Var_Pubrec.reconstruct {v : Var_Pubrec} {input rest : List UInt8} :
   finish_parser h → h_v
   subst h_v
   rw [UInt16.reconstruct h_pidVal,
-    UInt8.reconstruct h_rcodeVal,
+    ReasonCode.reconstruct h_rcodeVal,
     Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pubrel.roundtrip (v : Var_Pubrel) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [parser, serialize]
-  simp [UInt16.roundtrip, UInt8.roundtrip, Properties.roundtrip]
+  simp [UInt16.roundtrip, ReasonCode.roundtrip, Properties.roundtrip]
 
 theorem Var_Pubrel.reconstruct {v : Var_Pubrel} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -128,14 +128,14 @@ theorem Var_Pubrel.reconstruct {v : Var_Pubrel} {input rest : List UInt8} :
   finish_parser h → h_v
   subst h_v
   rw [UInt16.reconstruct h_pidVal,
-    UInt8.reconstruct h_rcodeVal,
+    ReasonCode.reconstruct h_rcodeVal,
     Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Pubcomp.roundtrip (v : Var_Pubcomp) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [parser, serialize]
-  simp [UInt16.roundtrip, UInt8.roundtrip, Properties.roundtrip]
+  simp [UInt16.roundtrip, ReasonCode.roundtrip, Properties.roundtrip]
 
 theorem Var_Pubcomp.reconstruct {v : Var_Pubcomp} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -147,7 +147,7 @@ theorem Var_Pubcomp.reconstruct {v : Var_Pubcomp} {input rest : List UInt8} :
   finish_parser h → h_v
   subst h_v
   rw [UInt16.reconstruct h_pidVal,
-    UInt8.reconstruct h_rcodeVal,
+    ReasonCode.reconstruct h_rcodeVal,
     Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
@@ -242,7 +242,7 @@ theorem Var_Pingresp.reconstruct {v : Var_Pingresp} {input rest : List UInt8} :
 theorem Var_Disconnect.roundtrip (v : Var_Disconnect) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [parser, serialize]
-  simp [UInt8.roundtrip, Properties.roundtrip]
+  simp [ReasonCode.roundtrip, Properties.roundtrip]
 
 theorem Var_Disconnect.reconstruct {v : Var_Disconnect} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -252,13 +252,13 @@ theorem Var_Disconnect.reconstruct {v : Var_Disconnect} {input rest : List UInt8
   step_parser h → propsVal rest2 h_propsVal
   finish_parser h → h_v
   subst h_v
-  rw [UInt8.reconstruct h_rcodeVal, Properties.reconstruct h_propsVal]
+  rw [ReasonCode.reconstruct h_rcodeVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem Var_Auth.roundtrip (v : Var_Auth) {rest : List UInt8} :
     parser.run (v.serialize ++ rest) = some (v, rest) := by
   simp [parser, serialize]
-  simp [UInt8.roundtrip, Properties.roundtrip]
+  simp [ReasonCode.roundtrip, Properties.roundtrip]
 
 theorem Var_Auth.reconstruct {v : Var_Auth} {input rest : List UInt8} :
     parser.run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -268,7 +268,7 @@ theorem Var_Auth.reconstruct {v : Var_Auth} {input rest : List UInt8} :
   step_parser h → propsVal rest2 h_propsVal
   finish_parser h → h_v
   subst h_v
-  rw [UInt8.reconstruct h_rcodeVal, Properties.reconstruct h_propsVal]
+  rw [ReasonCode.reconstruct h_rcodeVal, Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]
 
 theorem VarHeader.roundtrip_value
