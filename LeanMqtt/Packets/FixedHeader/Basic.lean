@@ -54,7 +54,7 @@ structure PublishFlags where
   retain : BitVec 1
 deriving Repr, BEq
 
-/-
+/--
 Defines the 4-bit flags specific to each packet kind.
 
 Most packets have constant flags mandated by the specification, but `PUBLISH` uses them
@@ -119,7 +119,7 @@ def PktFlags.decode? (k : PktKind) (b : BitVec 4) : Option (PktFlags k) :=
 /- ========================================================================= -/
 /-! ## Fixed Header Structure (`FixedHeader`) -/
 
-/-
+/--
 Fixed Header of an MQTT control packet.
 
 Combines the packet kind, the dependently-typed packet flags, and the remaining
