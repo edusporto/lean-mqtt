@@ -1,5 +1,13 @@
 import LeanMqtt.Core.Parser.Proofs
 
+/-!
+# Parser Tactics
+
+This module defines a few macros to facilitate writing proofs for parsers.
+
+These macros are simple syntax sugars to avoid writing tedious, repetitive code.
+-/
+
 /--
   `step_parser h → v state step_proof` is a tactic macro designed to unroll a single
   step of a `bind` operation in a parser reconstruction proof.
