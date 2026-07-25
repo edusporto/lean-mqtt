@@ -1,0 +1,13 @@
+name = "docbuild"
+reservoir = false
+version = "0.1.0"
+packagesDir = "../.lake/packages"
+
+[[require]]
+scope = "leanprover"
+name = "doc-gen4"
+rev = "092d6318789e7bb9160ade1e85bdbcc0abfd7f6e"
+
+[[require]]
+name = "LeanMqtt"
+path = "../"
