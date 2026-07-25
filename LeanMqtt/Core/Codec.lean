@@ -6,9 +6,9 @@ open Mqtt
 /-!
 # Codec
 
-This module containts type classes for _codecs_ which are types that can be
+This module containts type classes for _codecs_, which are types that can be
 serialized and parsed without an external context. For example, `String`s
-require the external context of a size to be parsed, while `Str`s don't.
+require the external context of their size to be parsed, while `Str`s don't.
 -/
 
 /--
