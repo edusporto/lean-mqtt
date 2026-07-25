@@ -3,7 +3,16 @@ import LeanMqtt.Core.Codec
 
 namespace Mqtt
 
-/- ========================= String ========================= -/
+/-!
+# Strings and Binary Data
+
+This module defines parsing and serialization for string-based and binary-based
+MQTT primitives: raw UTF-8 strings, length-prefixed strings (`Str`), string
+pairs (`StrPair`), and length-prefixed binary data (`BinaryData`).
+-/
+
+/- ========================================================================= -/
+/-! ## Raw Strings (`String`) -/
 
 -- TODO: benchmark if `ByteArray.toList arr` is faster than `Array.toList arr.data`
 def String.serialize (s : String) := s.toUTF8.toList
@@ -30,7 +39,8 @@ def String.parserWithProof (n : Nat) : Parser { s : String // s.utf8ByteSize = n
   else
     none
 
-/- ========================= Str ========================= -/
+/- ========================================================================= -/
+/-! ## Length-Prefixed String (`Str`) -/
 
 abbrev Str := WithByteSize String UInt16
 
@@ -46,7 +56,8 @@ instance : Codec Str where
   parser := Str.parser
   serialize := Str.serialize
 
-/- ========================= StrPair ========================= -/
+/- ========================================================================= -/
+/-! ## String Pair (`StrPair`) -/
 
 abbrev StrPair := Str × Str
 
@@ -62,7 +73,8 @@ instance : Codec StrPair where
   parser := StrPair.parser
   serialize := StrPair.serialize
 
-/- ========================= BinaryData ========================= -/
+/- ========================================================================= -/
+/-! ## Binary Data (`BinaryData`) -/
 
 abbrev BinaryData := WithByteSize (Array UInt8) UInt16
 

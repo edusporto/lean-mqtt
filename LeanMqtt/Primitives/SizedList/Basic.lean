@@ -5,24 +5,35 @@ import LeanMqtt.Core.Parser.Basic
 namespace Mqtt
 open Mqtt
 
-/- ========================= Generic List ByteSize ========================= -/
+/-!
+# Sized Lists
+
+This module provides the generic `SizedList` primitive for parsing and serializing
+variable-length lists of items where the total byte length is prefixed in the
+payload (as is common in MQTT properties and payloads). It establishes the proofs
+necessary to guarantee parsing termination and length correctness.
+-/
+
+/- ========================================================================= -/
+/-! ## Generic List ByteSize -/
 
 /--
-  Computes the total byte size of a list by summing the byte sizes of its elements.
+Computes the total byte size of a list by summing the byte sizes of its elements.
 -/
 abbrev List.rawByteSize {α : Type} [GetByteSize α] (l : List α) : Nat :=
   (l.map GetByteSize.byteSize).sum
 
 /--
-  Automatically provides a `GetByteSize` implementation for any list
-  whose elements implement `GetByteSize`.
+Automatically provides a `GetByteSize` implementation for any list
+whose elements implement `GetByteSize`.
 -/
 instance instGetByteSizeList {α : Type} [GetByteSize α] : GetByteSize (List α) where
   byteSize := List.rawByteSize
 
-/- ============================== ChunkItem ================================ -/
+/- ========================================================================= -/
+/-! ## Chunk Items (`ChunkItem`) -/
 /--
-  A typeclass bundling the proofs required to safely parse a chunk inside a bounded loop.
+A typeclass bundling the proofs required to safely parse a chunk inside a bounded loop.
 -/
 class ChunkItem (α : Type) [GetByteSize α] [c : Codec α] where
   -- Size properties to ensure correctness and termination
@@ -31,9 +42,9 @@ class ChunkItem (α : Type) [GetByteSize α] [c : Codec α] where
     c.parser.run input = some (a, rest) → input.length = GetByteSize.byteSize a + rest.length
 
 /--
-  Recursively parses items of type `α` from a bounded sequence of bytes.
-  Returns the list of parsed items along with a proof that the sum of their
-  byte sizes exactly matches the original length of the input.
+Recursively parses items of type `α` from a bounded sequence of bytes.
+Returns the list of parsed items along with a proof that the sum of their
+byte sizes exactly matches the original length of the input.
 -/
 def ChunkItem.parseChunkLoop {α : Type} [GetByteSize α] [Codec α] [ChunkItem α]
     (input : List UInt8) :
@@ -59,18 +70,19 @@ decreasing_by
   have h_p := ChunkItem.h_pos item
   omega
 
-/- ============================== SizedList ================================ -/
+/- ========================================================================= -/
+/-! ## Sized List Definition (`SizedList`) -/
 
 /--
-  List of items preceeded by the sum of their byte sizes.
-  Transparently resolves to `WithByteSize (List α) lenTyp`.
+List of items preceeded by the sum of their byte sizes.
+Transparently resolves to `WithByteSize (List α) lenTyp`.
 -/
 abbrev SizedList (α lenTyp : Type) [GetByteSize α] [Coe lenTyp Nat] :=
   WithByteSize (List α) lenTyp
 
 /--
-  Serializes a `SizedList` using a `Codec` for the length prefix
-  and `ChunkItem` for the elements.
+Serializes a `SizedList` using a `Codec` for the length prefix
+and `ChunkItem` for the elements.
 -/
 def SizedList.serialize {α lenTyp : Type}
     [GetByteSize α] [Coe lenTyp Nat] [Codec α] [ChunkItem α] [Codec lenTyp]
@@ -78,7 +90,7 @@ def SizedList.serialize {α lenTyp : Type}
   Codec.serialize sl.len.val ++ sl.val.flatMap Codec.serialize
 
 /--
-  Parses a `SizedList` with a `Codec` length prefix and `ChunkItem` elements
+Parses a `SizedList` with a `Codec` length prefix and `ChunkItem` elements
 -/
 def SizedList.parser {α lenTyp : Type}
   [GetByteSize α] [Codec α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp] :

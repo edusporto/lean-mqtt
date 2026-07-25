@@ -3,18 +3,27 @@ import LeanMqtt.Core.Codec
 
 namespace Mqtt
 
-/- ========================= VarInt ========================= -/
+/-!
+# Variable Byte Integers
+
+This module provides the implementation of MQTT's Variable Byte Integer format.
+This format encodes unsigned integers up to 268,435,455 using 1 to 4 bytes, where the
+continuation bit (the most significant bit) indicates whether another byte follows.
+-/
+
+/- ========================================================================= -/
+/-! ## Variable Byte Integer (`VarInt`) -/
 
 /--
-  The maximum value for a
-  [Variable Byte Integer](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011)
-  is 268_435_455 (128^4 - 1).
+The maximum value for a
+[Variable Byte Integer](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011)
+is 268_435_455 (128^4 - 1).
 -/
 abbrev VarInt.limit : Nat := 268_435_456
 
 /--
-  Type representing a
-  [Variable Byte Integer](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011).
+Type representing a
+[Variable Byte Integer](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011).
 -/
 abbrev VarInt := Fin VarInt.limit
 

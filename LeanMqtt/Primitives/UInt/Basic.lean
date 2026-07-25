@@ -2,14 +2,18 @@ import LeanMqtt.Core.Parser.Basic
 import LeanMqtt.Core.WithByteSize
 import LeanMqtt.Core.Codec
 
-instance : Coe UInt16 Nat where
-  coe := UInt16.toNat
-instance : Coe UInt32 Nat where
-  coe := UInt32.toNat
-
 namespace Mqtt
 
-/- ========================= UInt8 ========================= -/
+/-!
+# Unsigned Integers
+
+This module defines parsing and serialization instances for Lean's standard
+unsigned integer types (`UInt8`, `UInt16`, `UInt32`), specifically following
+MQTT's big-endian network byte order format.
+-/
+
+/- ========================================================================= -/
+/-! ## 8-bit Unsigned Integer (`UInt8`) -/
 
 def UInt8.serialize (b : UInt8) : List UInt8 :=
   [b]
@@ -25,7 +29,8 @@ instance : Codec UInt8 where
   parser := UInt8.parser
   serialize := UInt8.serialize
 
-/- ========================= UInt16 ========================= -/
+/- ========================================================================= -/
+/-! ## 16-bit Unsigned Integer (`UInt16`) -/
 
 def UInt16.serialize (n : UInt16) : List UInt8 :=
   let b1 := (n >>> 8).toUInt8
@@ -41,7 +46,8 @@ instance : Codec UInt16 where
   parser := UInt16.parser
   serialize := UInt16.serialize
 
-/- ========================= UInt32 ========================= -/
+/- ========================================================================= -/
+/-! ## 32-bit Unsigned Integer (`UInt32`) -/
 
 def UInt32.serialize (n : UInt32) : List UInt8 :=
   let b1 := (n >>> 24).toUInt8
@@ -65,3 +71,8 @@ instance : Codec UInt32 where
   serialize := UInt32.serialize
 
 end Mqtt
+
+instance : Coe UInt16 Nat where
+  coe := UInt16.toNat
+instance : Coe UInt32 Nat where
+  coe := UInt32.toNat

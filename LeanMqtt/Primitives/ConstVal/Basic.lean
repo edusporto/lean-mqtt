@@ -3,9 +3,19 @@ import LeanMqtt.Core.Codec
 namespace Mqtt
 open Mqtt
 
+/-!
+# Constant Values
+
+This module provides the generic `ConstVal` primitive for defining fields that
+must exactly match a specific, statically known constant.
+-/
+
+/- ========================================================================= -/
+/-! ## Constant Value Type (`ConstVal`) -/
+
 /--
-  `ConstVal` is a generic primitive for fields that must exactly match a provided constant.
-  It ensures the underlying value is equal to `expected`.
+`ConstVal` is a generic primitive for fields that must exactly match a provided constant.
+It ensures the underlying value is equal to `expected`.
 -/
 abbrev ConstVal (α : Type) (expected : α) : Type :=
   { val : α // val = expected }
