@@ -7,16 +7,28 @@ import LeanMqtt.Primitives.Str.Basic
 namespace Mqtt
 open Mqtt
 
-/- ========================= Property ========================= -/
+/-!
+# Properties
+
+This module defines the MQTT `Property` structure, which encodes optional
+metadata in Variable Headers. It uses a three-layer dependent typing approach
+(`ID -> Kind -> Type`) to automatically resolve the specific Lean type of a
+property value based on its identifier.
+-/
+
+/- ========================================================================= -/
+/-! ## Property Structure -/
 
 /--
-  Defines the type of the value stored in a property.
+Defines the type of the value stored in a property.
 
-  We do a three layer approach (ID -> Kind -> Type) instead of deriving
-  types directly from the ID to help Lean automatically decide the type of
-  each property in `Property.serializeKind`, without having to include
-  proofs in each branch.
+We do a three layer approach (ID -> Kind -> Type) instead of deriving
+types directly from the ID to help Lean automatically decide the type of
+each property in `Property.serializeKind`, without having to include
+proofs in each branch.
 -/
+-- TODO: some properties actually change their behavior according to the specific
+-- id they represent. We plan on dealing with this when we tackle MQTT Payloads
 inductive Property.Kind
   | u8 | u16 | u32 | varInt | binary | string | pair | none
   deriving DecidableEq
@@ -44,10 +56,10 @@ abbrev Property.typeOfKind (k : Property.Kind) : Type :=
   | .none   => Empty
 
 /--
-  Serializes the value stored in a property from its kind.
+Serializes the value stored in a property from its kind.
 
-  We pass `k`, and `val` of type `Property.typeOfKind k` to help Lean automatically
-  reduce the type of `val` to what's desired in each branch.
+We pass `k`, and `val` of type `Property.typeOfKind k` to help Lean automatically
+reduce the type of `val` to what's desired in each branch.
 -/
 def Property.serializeKind (k : Property.Kind) (val : Property.typeOfKind k) : List UInt8 :=
   match k with
@@ -74,6 +86,10 @@ def Property.parserKind (k : Property.Kind) : Parser (Property.typeOfKind k) :=
 abbrev Property.valType (id : VarInt) : Type :=
   Property.typeOfKind (getKind id)
 
+/--
+A dependently-typed structure representing an MQTT Property. The specific type
+of `val` is dynamically determined by the `id` field.
+-/
 structure Property where
   id  : VarInt
   val : Property.valType id
