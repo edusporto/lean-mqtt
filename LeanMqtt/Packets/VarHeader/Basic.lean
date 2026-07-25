@@ -6,11 +6,20 @@ import LeanMqtt.Packets.VarHeader.Variations
 namespace Mqtt
 open Mqtt
 
-/- ========================= VarHeader ========================= -/
+/-!
+# Variable Header
+
+This module acts as the central router for Variable Headers. It uses dependent types
+to dynamically map the parsed `FixedHeader` to the corresponding concrete `VarHeader`
+structure based on the packet kind and its specific flags.
+-/
+
+/- ========================================================================= -/
+/-! ## Variable Header Dispatch -/
 
 /--
-  Determines the Variable Header type based on the Packet Kind
-  and the specific flags (needed for Publish QoS).
+Determines the specific Variable Header type based on the Packet Kind
+and the specific flags (required for packets like `PUBLISH` which carry QoS).
 -/
 def VarHeader.getType (kind : PktKind) (flags : PktFlags kind) : Type :=
   match kind, flags with
@@ -70,6 +79,10 @@ def VarHeader.parserValue
   | .disconnect, _  => Var_Disconnect.parser
   | .auth, _        => Var_Auth.parser
 
+/--
+A dependently-typed abbreviation that automatically resolves to the correct
+variable header structure type for a given parsed `FixedHeader`.
+-/
 abbrev VarHeader (fh : FixedHeader) : Type :=
   VarHeader.getType fh.kind fh.flags
 

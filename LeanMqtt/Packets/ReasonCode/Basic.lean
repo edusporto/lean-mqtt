@@ -29,9 +29,15 @@ def handleAuth (rc : ReasonCode .auth) : Nat :=
 ```
 -/
 
+/- ========================================================================= -/
+/-! ## Global Reason Code table (`GlobalReasonCode`) -/
+
 /--
-  Global Reason Code table, available in the
-  [MQTT specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901031).
+Global Reason Code table, available in the
+[MQTT specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901031).
+
+Represents all the possible Reason Code values. Each packet type will have its own subset
+of valid codes.
 -/
 enum_with_codec GlobalReasonCode : UInt8 where
   | success => 0x00
@@ -86,10 +92,18 @@ def GlobalReasonCode.parser : Parser GlobalReasonCode := do
   let rc ← GlobalReasonCode.decode? b
   return rc
 
-/--
-  Validating function for Reason Codes.
+/- ========================================================================= -/
+/-!
+## Local Reason Code (`ReasonCode`)
 
-  Guarantess that each packet type can only store valid Reason Codes.
+This section defines the specific Reason Codes for each packet type, based on the
+`GlobalReasonCode.isValid` validation function.
+-/
+
+/--
+Validating function for Reason Codes.
+
+Guarantess that each packet type can only store valid Reason Codes.
 -/
 valid_variants GlobalReasonCode.isValid : PktKind → GlobalReasonCode
   | connack => [

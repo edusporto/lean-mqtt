@@ -76,9 +76,11 @@ def expandEnumWithCodec
       $[$indConstructors:ctor]*
     deriving Repr, DecidableEq, Inhabited
 
+    /-- Encodes the enum to its underlying value. -/
     def $encodeName : $name → $type
       $[$encArms:matchAlt]*
 
+    /-- Decodes the underlying value to the enum, if valid. -/
     def $decodeName : $type → Option $name
       $[$decArms:matchAlt]*
   )

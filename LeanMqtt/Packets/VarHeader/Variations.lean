@@ -10,7 +10,17 @@ import LeanMqtt.Packets.ReasonCode.Basic
 namespace Mqtt
 open Mqtt
 
-/- ========================= Var_Connect ========================= -/
+/-!
+# Variable Header Variations
+
+This module defines the specific Variable Header structures for each of the 15 MQTT
+control packet types. It enforces protocol rules at the type level (e.g., verifying
+that `ConnectFlags` reserved bits are 0) and provides precise serialization and
+parsing implementations for each packet type.
+-/
+
+/- ========================================================================= -/
+/-! ## CONNECT Variable Header (`Var_Connect`) -/
 
 def ConnectFlagsPred (b : UInt8) : List Condition :=
   let bv := b.toBitVec
@@ -59,7 +69,8 @@ def Var_Connect.parser : Parser Var_Connect := do
   let props ← Properties.parser
   return { protocol_name, protocol_version, connect_flags, props }
 
-/- ========================= Var_Connack ========================= -/
+/- ========================================================================= -/
+/-! ## CONNACK Variable Header (`Var_Connack`) -/
 
 def ConnackFlagsProp (b : UInt8) : List Condition :=
   let bv := b.toBitVec
@@ -86,7 +97,8 @@ def Var_Connack.parser : Parser Var_Connack := do
   let props       ← Properties.parser
   return { ack_flags, reason_code, props }
 
-/- ========================= Var_Publish ========================= -/
+/- ========================================================================= -/
+/-! ## PUBLISH Variable Header (`Var_Publish`) -/
 
 def TopicNameProp (s : Str) : List Condition :=
   [ ensure! ¬ s.val.contains '+',
@@ -112,7 +124,8 @@ def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
 
   return { topic_name, packet_id, props }
 
-/- ========================= Var_Puback ========================= -/
+/- ========================================================================= -/
+/-! ## PUBACK Variable Header (`Var_Puback`) -/
 
 structure Var_Puback where
   packet_id   : UInt16
@@ -132,7 +145,8 @@ def Var_Puback.parser : Parser (Var_Puback) := do
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
-/- ========================= Var_Pubrec ========================= -/
+/- ========================================================================= -/
+/-! ## PUBREC Variable Header (`Var_Pubrec`) -/
 
 structure Var_Pubrec where
   packet_id   : UInt16
@@ -152,7 +166,8 @@ def Var_Pubrec.parser : Parser (Var_Pubrec) := do
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
-/- ========================= Var_Pubrel ========================= -/
+/- ========================================================================= -/
+/-! ## PUBREL Variable Header (`Var_Pubrel`) -/
 
 structure Var_Pubrel where
   packet_id   : UInt16
@@ -172,7 +187,8 @@ def Var_Pubrel.parser : Parser (Var_Pubrel) := do
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
-/- ========================= Var_Pubcomp ========================= -/
+/- ========================================================================= -/
+/-! ## PUBCOMP Variable Header (`Var_Pubcomp`) -/
 
 structure Var_Pubcomp where
   packet_id   : UInt16
@@ -192,7 +208,8 @@ def Var_Pubcomp.parser : Parser (Var_Pubcomp) := do
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
-/- ========================= Var_Subscribe ========================= -/
+/- ========================================================================= -/
+/-! ## SUBSCRIBE Variable Header (`Var_Subscribe`) -/
 
 structure Var_Subscribe where
   packet_id : UInt16
@@ -207,7 +224,8 @@ def Var_Subscribe.parser : Parser (Var_Subscribe) := do
   let props ← Properties.parser
   return { packet_id, props }
 
-/- ========================= Var_Suback ========================= -/
+/- ========================================================================= -/
+/-! ## SUBACK Variable Header (`Var_Suback`) -/
 
 structure Var_Suback where
   packet_id : UInt16
@@ -222,7 +240,8 @@ def Var_Suback.parser : Parser (Var_Suback) := do
   let props ← Properties.parser
   return { packet_id, props }
 
-/- ========================= Var_Unsubscribe ========================= -/
+/- ========================================================================= -/
+/-! ## UNSUBSCRIBE Variable Header (`Var_Unsubscribe`) -/
 
 structure Var_Unsubscribe where
   packet_id : UInt16
@@ -237,7 +256,8 @@ def Var_Unsubscribe.parser : Parser (Var_Unsubscribe) := do
   let props ← Properties.parser
   return { packet_id, props }
 
-/- ========================= Var_Unsuback ========================= -/
+/- ========================================================================= -/
+/-! ## UNSUBACK Variable Header (`Var_Unsuback`) -/
 
 structure Var_Unsuback where
   packet_id : UInt16
@@ -252,21 +272,24 @@ def Var_Unsuback.parser : Parser (Var_Unsuback) := do
   let props ← Properties.parser
   return { packet_id, props }
 
-/- ========================= Var_Pingreq ========================= -/
+/- ========================================================================= -/
+/-! ## PINGREQ Variable Header (`Var_Pingreq`) -/
 
 abbrev Var_Pingreq  := Unit
 
 def Var_Pingreq.serialize (_ : Var_Pingreq) : List UInt8 := []
 def Var_Pingreq.parser : Parser (Var_Pingreq) := return ()
 
-/- ========================= Var_Pingresp ========================= -/
+/- ========================================================================= -/
+/-! ## PINGRESP Variable Header (`Var_Pingresp`) -/
 
 abbrev Var_Pingresp := Unit
 
 def Var_Pingresp.serialize (_ : Var_Pingresp) : List UInt8 := []
 def Var_Pingresp.parser : Parser (Var_Pingresp) := return ()
 
-/- ========================= Var_Disconnect ========================= -/
+/- ========================================================================= -/
+/-! ## DISCONNECT Variable Header (`Var_Disconnect`) -/
 
 structure Var_Disconnect where
   -- TODO: The Reason Code and Properties can be omitted if the
@@ -283,7 +306,8 @@ def Var_Disconnect.parser : Parser (Var_Disconnect) := do
   let props ← Properties.parser
   return { reason_code, props }
 
-/- ========================= Var_Auth ========================= -/
+/- ========================================================================= -/
+/-! ## AUTH Variable Header (`Var_Auth`) -/
 
 structure Var_Auth where
   -- TODO: The Reason Code and Properties can be omitted if the
