@@ -8,8 +8,9 @@ namespace Mqtt
 
 This module contains macros for simple inductive types (enumerators).
 
-The macros include `enum_with_codec`, which generates tagged enums, and
-`valid_variants`, which
+The macros include `enum_with_codec`, which generates enums with encoding and decoding
+functions, and `valid_variants`, which creates a validation function for subsets of
+an enum's variants.
 -/
 
 /-!
