@@ -19,7 +19,15 @@ The macros include `enum_with_codec`, which generates tagged enums, and
 type. The macro automatically generates `encode` and `decode?` functions to this
 other type.
 
-For an example, see `Mqtt.ReasonCode`.
+**Example usage:**
+```lean
+-- This also generates functions `MyEnum.encode` and `MyEnum.decode?`:
+enum_with_codec MyEnum : UInt8 where
+  | a => 0
+  | b => 1
+```
+
+For an example in the codebase, see `Mqtt.GlobalReasonCode`.
 -/
 
 syntax enum_variant := "|" ident "=>" num
@@ -28,7 +36,12 @@ syntax enum_variant := "|" ident "=>" num
 A generalized macro to define a simple enum-like inductive type
 along with its `encode` and `decode?` codec functions.
 -/
-def expandEnumWithCodec (doc? : Option (TSyntax ``Lean.Parser.Command.docComment)) (name : TSyntax `ident) (type : TSyntax `term) (variants : Array (TSyntax ``enum_variant)) : MacroM (TSyntax `command) := do
+def expandEnumWithCodec
+    (doc? : Option (TSyntax ``Lean.Parser.Command.docComment))
+    (name : TSyntax `ident)
+    (type : TSyntax `term)
+    (variants : Array (TSyntax ``enum_variant)) :
+    MacroM (TSyntax `command) := do
   let mut indConstructors : Array (TSyntax ``Lean.Parser.Command.ctor) := #[]
   let mut encArms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
   let mut decArms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
@@ -85,23 +98,46 @@ elab doc?:(docComment)? "enum_with_codec?" name:ident ":" type:term "where" vari
 /-!
 ## `valid_variants`
 
-`valid_variants` creates a function to validate subsets of an enum to specific tags.
+`valid_variants` creates a function to validate subsets of an enum to specific tags in `O(1)` time.
+This is heavily used to create dependent types that ensure only valid variants are allowed
+for a given tag, vastly simplifying pattern matching.
 
-For an example, see `Mqtt.isValidReasonCode`.
+**Example usage:**
+```lean
+inductive Tag | t1 | t2
+inductive Var | v1 | v2 | v3
+
+valid_variants isValidVar : Tag → Var
+  | t1 => [v1, v2]
+  | t2 => [v3]
+
+def ValidVar (t : Tag) := { v : Var // isValidVar t v }
+
+/- Lean knows this match is exhaustive because `isValidVar .t2` is only true for `.v3`: -/
+def handle_t2 (v : ValidVar .t2) : String :=
+  match v with
+  | ⟨.v3, _⟩ => "Handled v3"
+```
+
+For an example in the codebase, see `Mqtt.isValidReasonCode`.
 -/
 
-syntax valid_variants_list := ident "=>" "[" ident,* "]"
+syntax valid_variants_list := "|" ident "=>" "[" ident,* "]"
 
 /--
 A generalized macro that creates a validating function for any two simple inductive types,
 where one is a tag and the other is the set of possible variants for that tag.
 -/
-def expandValidVariants (doc? : Option (TSyntax ``Lean.Parser.Command.docComment)) (name tag var : TSyntax `ident) (lists : Array (TSyntax ``valid_variants_list)) : MacroM (TSyntax `command) := do
+def expandValidVariants
+    (doc? : Option (TSyntax ``Lean.Parser.Command.docComment))
+    (name tag var : TSyntax `ident)
+    (lists : Array (TSyntax ``valid_variants_list)) :
+    MacroM (TSyntax `command) := do
   let mut arms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
 
   for list in lists do
     match list with
-    | `(valid_variants_list| $t:ident => [ $[$vs:ident],* ]) =>
+    | `(valid_variants_list| | $t:ident => [ $[$vs:ident],* ]) =>
       for v in vs do
         let fullT := mkIdentFrom t (Name.mkSimple t.getId.toString)
         let fullV := mkIdentFrom v (Name.mkSimple v.getId.toString)
@@ -119,10 +155,10 @@ def expandValidVariants (doc? : Option (TSyntax ``Lean.Parser.Command.docComment
       $[$arms:matchAlt]*
   )
 
-macro doc?:(docComment)? "valid_variants" name:ident ":" tag:ident "→" var:ident "{" lists:valid_variants_list* "}" : command => do
+macro doc?:(docComment)? "valid_variants" name:ident ":" tag:ident "→" var:ident lists:valid_variants_list* : command => do
   expandValidVariants doc? name tag var lists
 
-elab doc?:(docComment)? "valid_variants?" name:ident ":" tag:ident "→" var:ident "{" lists:valid_variants_list* "}" : command => do
+elab doc?:(docComment)? "valid_variants?" name:ident ":" tag:ident "→" var:ident lists:valid_variants_list* : command => do
   let stx ← liftMacroM <| expandValidVariants doc? name tag var lists
   if stx.raw.isOfKind nullKind then
     for arg in stx.raw.getArgs do

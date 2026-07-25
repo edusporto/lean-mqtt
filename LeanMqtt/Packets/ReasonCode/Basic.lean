@@ -58,8 +58,8 @@ def GlobalReasonCode.parser : Parser GlobalReasonCode := do
   let rc ← GlobalReasonCode.decode? b
   return rc
 
-valid_variants isValidReasonCode : PktKind → GlobalReasonCode {
-  connack => [
+valid_variants isValidReasonCode : PktKind → GlobalReasonCode
+  | connack => [
     success, unspecified_error, malformed_packet, protocol_error,
     implementation_specific_error, unsupported_protocol_version,
     client_identifier_not_valid, bad_user_name_or_password,
@@ -69,36 +69,36 @@ valid_variants isValidReasonCode : PktKind → GlobalReasonCode {
     qos_not_supported, use_another_server, server_moved,
     connection_rate_exceeded
   ]
-  puback => [
+  | puback => [
     success, no_matching_subscribers, unspecified_error,
     implementation_specific_error, not_authorized, topic_name_invalid,
     packet_identifier_in_use, quota_exceeded, payload_format_invalid
   ]
-  pubrec => [
+  | pubrec => [
     success, no_matching_subscribers, unspecified_error,
     implementation_specific_error, not_authorized, topic_name_invalid,
     packet_identifier_in_use, quota_exceeded, payload_format_invalid
   ]
-  pubrel => [
+  | pubrel => [
     success, unspecified_error, implementation_specific_error,
     packet_identifier_not_found
   ]
-  pubcomp => [
+  | pubcomp => [
     success, unspecified_error, implementation_specific_error,
     packet_identifier_not_found
   ]
-  suback => [
+  | suback => [
     success, granted_qos_1, granted_qos_2, unspecified_error,
     implementation_specific_error, not_authorized, topic_filter_invalid,
     packet_identifier_in_use, quota_exceeded, shared_subscriptions_not_supported,
     subscription_identifiers_not_supported, wildcard_subscriptions_not_supported
   ]
-  unsuback => [
+  | unsuback => [
     success, no_subscription_existed, unspecified_error,
     implementation_specific_error, not_authorized, topic_filter_invalid,
     packet_identifier_in_use
   ]
-  disconnect => [
+  | disconnect => [
     success, disconnect_with_will_message, unspecified_error,
     malformed_packet, protocol_error, implementation_specific_error,
     not_authorized, server_busy, server_shutting_down, keep_alive_timeout,
@@ -110,10 +110,9 @@ valid_variants isValidReasonCode : PktKind → GlobalReasonCode {
     connection_rate_exceeded, maximum_connect_time,
     subscription_identifiers_not_supported, wildcard_subscriptions_not_supported
   ]
-  auth => [
+  | auth => [
     success, continue_authentication, re_authenticate
   ]
-}
 
 def ReasonCode (p : PktKind) := { rc : GlobalReasonCode // isValidReasonCode p rc }
 
