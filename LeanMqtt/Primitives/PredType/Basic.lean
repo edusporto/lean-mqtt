@@ -18,18 +18,18 @@ instance (c : Condition) : Decidable c.p := c.dec
 abbrev AllHold {α : Type} (gen : α → List Condition) (v : α) : Prop :=
   ∀ c ∈ gen v, c.p
 
-abbrev PredType {α : Type} (gen : α → List Condition) : Type :=
+abbrev PredType (α : Type) (gen : α → List Condition) : Type :=
   { val : α // AllHold gen val }
 
-theorem PredType.get_proof {α : Type} {gen : α → List Condition} (v : PredType gen)
+theorem PredType.get_proof {α : Type} {gen : α → List Condition} (v : PredType α gen)
     (idx : Nat) (h_idx : idx < (gen v.val).length := by exact of_decide_eq_true rfl) :
     ((gen v.val).get ⟨idx, h_idx⟩).p :=
   v.property _ (List.get_mem ..)
 
-def PredType.serialize {α : Type} [c : Codec α] {gen : α → List Condition} (v : PredType gen) : List UInt8 :=
+def PredType.serialize {α : Type} [c : Codec α] {gen : α → List Condition} (v : PredType α gen) : List UInt8 :=
   @Codec.serialize α c v.val
 
-def PredType.parser {α : Type} [c : Codec α] (gen : α → List Condition) : Parser (PredType gen) := do
+def PredType.parser {α : Type} [c : Codec α] (gen : α → List Condition) : Parser (PredType α gen) := do
   let val ← @Codec.parser α c
   if h : AllHold gen val then
     return ⟨val, h⟩

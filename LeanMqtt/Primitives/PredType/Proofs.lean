@@ -5,7 +5,7 @@ namespace Mqtt
 open Mqtt
 
 theorem PredType.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] {gen : α → List Condition}
-    (v : PredType gen) {rest : List UInt8} :
+    (v : PredType α gen) {rest : List UInt8} :
     (PredType.parser gen).run (PredType.serialize v ++ rest) = some (v, rest) := by
   unfold PredType.parser PredType.serialize
   cases v with
@@ -18,7 +18,7 @@ theorem PredType.roundtrip {α : Type} [c : Codec α] [LawfulCodec α] {gen : α
     rfl
 
 theorem PredType.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] (gen : α → List Condition)
-    {v : PredType gen} {input rest : List UInt8} :
+    {v : PredType α gen} {input rest : List UInt8} :
     (PredType.parser gen).run input = some (v, rest) → input = PredType.serialize v ++ rest := by
   unfold PredType.parser PredType.serialize
   intro h
