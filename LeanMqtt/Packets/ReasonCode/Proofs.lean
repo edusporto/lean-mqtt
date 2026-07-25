@@ -42,7 +42,7 @@ theorem ReasonCode.roundtrip {p : PktKind} (prc : ReasonCode p) {rest : List UIn
   simp [ReasonCode.parser, ReasonCode.serialize]
   have h_rc := GlobalReasonCode.roundtrip prc.val (rest := rest)
   simp [h_rc]
-  have h_valid : isValidReasonCode p prc.val = true := prc.property
+  have h_valid : GlobalReasonCode.isValid p prc.val = true := prc.property
   split
   · next h_eq =>
     congr

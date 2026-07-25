@@ -119,7 +119,7 @@ def handle_t2 (v : ValidVar .t2) : String :=
   | ⟨.v3, _⟩ => "Handled v3"
 ```
 
-For an example in the codebase, see `Mqtt.isValidReasonCode`.
+For an example in the codebase, see `Mqtt.GlobalReasonCode.isValid`.
 -/
 
 syntax valid_variants_list := "|" ident "=>" "[" ident,* "]"

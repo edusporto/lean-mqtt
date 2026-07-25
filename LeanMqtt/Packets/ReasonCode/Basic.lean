@@ -5,6 +5,34 @@ import LeanMqtt.Helpers.EnumUtils
 
 namespace Mqtt
 
+/-!
+# MQTT Reason Codes
+
+The MQTT specification defines a
+[global Reason Code table](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901031)
+indicating the possible results of an operation. Each packet type has its
+subset of valid reason codes from the global table. To model this, we define
+a `GlobalReasonCode` enum with its encoding and decoding functions using the
+`enum_with_codec` macro, then define a `GlobalReasonCode.isValid` function
+with the `valid_variants` macro that validates which reason codes for each
+packet type. The `ReasonCode` structure then allows us to pattern match over a
+specific packet type's reason codes without covering impossible match arms. For
+instance, see the following usage of `ReasonCode .auth`:
+
+```lean
+def handleAuth (rc : ReasonCode .auth) : Nat :=
+  match rc with
+  | ⟨.success, _⟩ => 0
+  | ⟨.continue_authentication, _⟩ => 1
+  | ⟨.re_authenticate, _⟩ => 2
+  -- no complaints about missing cases
+```
+-/
+
+/--
+  Global Reason Code table, available in the
+  [MQTT specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901031).
+-/
 enum_with_codec GlobalReasonCode : UInt8 where
   | success => 0x00
   | granted_qos_1 => 0x01
@@ -58,7 +86,12 @@ def GlobalReasonCode.parser : Parser GlobalReasonCode := do
   let rc ← GlobalReasonCode.decode? b
   return rc
 
-valid_variants isValidReasonCode : PktKind → GlobalReasonCode
+/--
+  Validating function for Reason Codes.
+
+  Guarantess that each packet type can only store valid Reason Codes.
+-/
+valid_variants GlobalReasonCode.isValid : PktKind → GlobalReasonCode
   | connack => [
     success, unspecified_error, malformed_packet, protocol_error,
     implementation_specific_error, unsupported_protocol_version,
@@ -114,14 +147,15 @@ valid_variants isValidReasonCode : PktKind → GlobalReasonCode
     success, continue_authentication, re_authenticate
   ]
 
-def ReasonCode (p : PktKind) := { rc : GlobalReasonCode // isValidReasonCode p rc }
+/-- Validated Reason Codes for each packet type. -/
+abbrev ReasonCode (p : PktKind) := { rc : GlobalReasonCode // GlobalReasonCode.isValid p rc }
 
 def ReasonCode.serialize {p : PktKind} (prc : ReasonCode p) : List UInt8 :=
   prc.val.serialize
 
 def ReasonCode.parser (p : PktKind) : Parser (ReasonCode p) := do
   let rc ← GlobalReasonCode.parser
-  if h : isValidReasonCode p rc = true then
+  if h : GlobalReasonCode.isValid p rc then
     pure ⟨rc, h⟩
   else
     failure
