@@ -1,5 +1,9 @@
 -- import Batteries.Data.ByteArray
 
+/-!
+This module contains a few helper theorems supporting the main parser proofs.
+-/
+
 /--
   Available at
   [Batteries.Data.ByteArray](https://github.com/leanprover-community/batteries/blob/dff865b7ee7011518d59abfc101c368293173150/Batteries/Data/ByteArray.lean#L17).
