@@ -1,37 +1,29 @@
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Primitives.VarInt.Basic
 import LeanMqtt.Primitives.ConstVal.Basic
+import LeanMqtt.Helpers.EnumUtils
 
 namespace Mqtt
 open Mqtt
 
 /- ========================= PktKind ========================= -/
 
-inductive PktKind where
-  | connect | connack
-  | publish | puback | pubrec | pubrel | pubcomp
-  | subscribe | suback | unsubscribe | unsuback | pingreq | pingresp
-  | disconnect
-  | auth
-deriving Repr, BEq
-
-def PktKind.encode : PktKind → BitVec 4
-  | .connect     => 1   | .connack     => 2   | .publish     => 3
-  | .puback      => 4   | .pubrec      => 5   | .pubrel      => 6
-  | .pubcomp     => 7   | .subscribe   => 8   | .suback      => 9
-  | .unsubscribe => 10  | .unsuback    => 11  | .pingreq     => 12
-  | .pingresp    => 13  | .disconnect  => 14  | .auth        => 15
-
-def PktKind.decode? : BitVec 4 → Option PktKind
-  | 1 => some .connect    | 2 => some .connack     | 3 => some .publish
-  | 4 => some .puback     | 5 => some .pubrec      | 6 => some .pubrel
-  | 7 => some .pubcomp    | 8 => some .subscribe   | 9 => some .suback
-  | 10 => some .unsubscribe| 11 => some .unsuback  | 12 => some .pingreq
-  | 13 => some .pingresp  | 14 => some .disconnect | 15 => some .auth
-  | _ => none
-
-instance : Inhabited PktKind where
-  default := .pingreq
+enum_with_codec PktKind : BitVec 4 where
+  | connect     => 1
+  | connack     => 2
+  | publish     => 3
+  | puback      => 4
+  | pubrec      => 5
+  | pubrel      => 6
+  | pubcomp     => 7
+  | subscribe   => 8
+  | suback      => 9
+  | unsubscribe => 10
+  | unsuback    => 11
+  | pingreq     => 12
+  | pingresp    => 13
+  | disconnect  => 14
+  | auth        => 15
 
 /- =========================  Flags ========================= -/
 

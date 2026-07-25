@@ -22,20 +22,20 @@ other type.
 For an example, see `Mqtt.ReasonCode`.
 -/
 
-syntax enum_variant := ident "=>" num
+syntax enum_variant := "|" ident "=>" num
 
 /--
 A generalized macro to define a simple enum-like inductive type
 along with its `encode` and `decode?` codec functions.
 -/
-def expandEnumWithCodec (name type : TSyntax `ident) (variants : Array (TSyntax ``enum_variant)) : MacroM (TSyntax `command) := do
+def expandEnumWithCodec (name : TSyntax `ident) (type : TSyntax `term) (variants : Array (TSyntax ``enum_variant)) : MacroM (TSyntax `command) := do
   let mut indConstructors : Array (TSyntax ``Lean.Parser.Command.ctor) := #[]
   let mut encArms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
   let mut decArms : Array (TSyntax ``Lean.Parser.Term.matchAlt) := #[]
 
   for v in variants do
     match v with
-    | `(enum_variant| $id:ident => $val:num) =>
+    | `(enum_variant| | $id:ident => $val:num) =>
       -- Constructor: | ident
       let ctor ← `(Lean.Parser.Command.ctor| | $id:ident)
       indConstructors := indConstructors.push ctor
@@ -69,10 +69,10 @@ def expandEnumWithCodec (name type : TSyntax `ident) (variants : Array (TSyntax 
       $[$decArms:matchAlt]*
   )
 
-macro "enum_with_codec" name:ident ":" type:ident "{" variants:enum_variant* "}" : command => do
+macro "enum_with_codec" name:ident ":" type:term "where" variants:enum_variant* : command => do
   expandEnumWithCodec name type variants
 
-elab "enum_with_codec?" name:ident ":" type:ident "{" variants:enum_variant* "}" : command => do
+elab "enum_with_codec?" name:ident ":" type:term "where" variants:enum_variant* : command => do
   let stx ← liftMacroM <| expandEnumWithCodec name type variants
   logInfo m!"{stx}"
   elabCommand stx
