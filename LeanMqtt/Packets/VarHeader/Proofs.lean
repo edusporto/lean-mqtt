@@ -57,7 +57,7 @@ theorem Var_Connack.reconstruct {v : Var_Connack} {input rest : List UInt8} :
 theorem Var_Publish.roundtrip {qos : QoSBits} (v : Var_Publish qos) {rest : List UInt8} :
     (Var_Publish.parser qos).run (v.serialize ++ rest) = some (v, rest) := by
   simp [Var_Publish.parser, Var_Publish.serialize]
-  simp [Str.roundtrip, OptType.roundtrip, Properties.roundtrip]
+  simp [PredType.roundtrip, OptType.roundtrip, Properties.roundtrip]
 
 theorem Var_Publish.reconstruct {qos : QoSBits} {v : Var_Publish qos} {input rest : List UInt8} :
     (Var_Publish.parser qos).run input = some (v, rest) → input = v.serialize ++ rest := by
@@ -70,7 +70,7 @@ theorem Var_Publish.reconstruct {qos : QoSBits} {v : Var_Publish qos} {input res
   finish_parser h → h_v
   subst h_v
 
-  rw [Str.reconstruct h_topicVal,
+  rw [PredType.reconstruct TopicNameProp h_topicVal,
       OptType.reconstruct (qos.val > 0) h_pidVal,
       Properties.reconstruct h_propsVal]
   simp only [List.append_assoc]

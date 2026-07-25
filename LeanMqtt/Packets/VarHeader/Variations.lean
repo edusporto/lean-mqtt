@@ -18,8 +18,7 @@ def ConnectFlagsPred (b : UInt8) : List Condition :=
   let will_flag   := bv.extractLsb 2 2
   let will_qos    := bv.extractLsb 4 3
   let will_retain := bv.extractLsb 5 5
-  [
-    ensure! reserved = 0,
+  [ ensure! reserved = 0,
     ensure! will_flag = 0 → will_qos = 0 ∧ will_retain = 0,
     ensure! will_qos ≠ 3
   ]
@@ -89,8 +88,15 @@ def Var_Connack.parser : Parser Var_Connack := do
 
 /- ========================= Var_Publish ========================= -/
 
+def TopicNameProp (s : Str) : List Condition :=
+  [ ensure! ¬ s.val.contains '+',
+    ensure! ¬ s.val.contains '#'
+  ]
+
+abbrev TopicName := PredType Str TopicNameProp
+
 structure Var_Publish (qos : QoSBits) where
-  topic_name : Str
+  topic_name : TopicName
   packet_id  : OptType UInt16 (qos.val > 0)
   props      : Properties
 
@@ -100,7 +106,7 @@ def Var_Publish.serialize {qos : QoSBits} (v : Var_Publish qos) : List UInt8 :=
   v.props.serialize
 
 def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
-  let topic_name ← Str.parser
+  let topic_name ← PredType.parser TopicNameProp
   let packet_id ← OptType.parser (qos.val > 0)
   let props ← Properties.parser
 
