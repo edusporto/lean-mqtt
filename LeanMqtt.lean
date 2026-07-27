@@ -16,7 +16,7 @@ Verified, in this project, means that the implementation respects two key
 properties: _roundtrip_ and _reconstruction_, equivalent to _completeness_ and
 _soundness_ respectively. The former means that parsing a serialized value
 will perfectly recover that value, and the latter means that if parsing a value
-succeeded, then it must be exactly the result of that value's serialization.
+succeeds, then it must be exactly the result of that value's serialization.
 
 The approach builds on composable primitives in `LeanMqtt.Primitives.Basic` to
 represent packets in `LeanMqtt.Packets.Basic` and their corresponding proofs in
