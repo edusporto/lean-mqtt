@@ -15,11 +15,11 @@ It also introduces the `ensure!` macro for ergonomically building constraint lis
 /- ========================================================================= -/
 /-! ## Conditions -/
 structure Condition where
-  desc : String
   prop : Prop
-  dec : Decidable prop
+  decd : Decidable prop
+  desc : String
 
-instance (c : Condition) : Decidable c.prop := c.dec
+instance (c : Condition) : Decidable c.prop := c.decd
 
 /- ========================================================================= -/
 /-! ## Predicate Type (`PredType`) -/
@@ -78,6 +78,6 @@ def ConnectFlagsPred (b : UInt8) : List Condition :=
 -/
 macro "ensure! " p:term : term =>
   let desc := Lean.Syntax.mkStrLit (toString p.raw)
-  `( { desc := $desc, prop := $p, dec := inferInstance } )
+  `( { prop := $p, decd := inferInstance, desc := $desc } )
 
 end Mqtt
