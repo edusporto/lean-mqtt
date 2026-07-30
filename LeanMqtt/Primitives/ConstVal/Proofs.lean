@@ -32,4 +32,9 @@ theorem ConstVal.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] [Decida
   · dsimp [failure, Alternative.failure, StateT.failure, Option.bind] at h
     contradiction
 
+theorem ConstVal.serialize_len {α : Type} [Codec α] [GetByteSize α] {expected : α}
+    (v : ConstVal α expected) (h_len : ∀ a : α, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    (ConstVal.serialize v).length = GetByteSize.byteSize v := by
+  exact h_len v.val
+
 end Mqtt

@@ -140,7 +140,6 @@ def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
   let topic_name ← PredType.parser TopicNameProp
   let packet_id ← OptType.parser (qos.val > 0)
   let props ← Properties.parser
-
   return { topic_name, packet_id, props }
 
 @[simp]

@@ -20,4 +20,9 @@ theorem Payload.reconstruct {p : Payload} {input rest : List UInt8} :
   simp [Payload.serialize]
   exact h
 
+theorem Payload.serialize_len (p : Payload) :
+    p.serialize.length = GetByteSize.byteSize p := by
+  cases p
+  rfl
+
 end Mqtt

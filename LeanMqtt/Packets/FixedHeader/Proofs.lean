@@ -106,4 +106,10 @@ theorem FixedHeader.reconstruct {header : FixedHeader} {input rest : List UInt8}
 
   rw [h_byte_eq]
 
+theorem FixedHeader.serialize_len (h : FixedHeader) :
+    h.serialize.length = GetByteSize.byteSize h := by
+  simp only [FixedHeader.serialize, GetByteSize.byteSize, FixedHeader.byteSize]
+  simp only [List.length_append, List.length_singleton]
+  rfl
+
 end Mqtt

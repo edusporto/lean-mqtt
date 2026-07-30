@@ -267,4 +267,8 @@ instance : LawfulCodec VarInt where
   roundtrip   := VarInt.roundtrip
   reconstruct := VarInt.reconstruct
 
+theorem VarInt.serialize_len (v : VarInt) :
+    (Codec.serialize v).length = GetByteSize.byteSize v := by
+  rfl
+
 end Mqtt

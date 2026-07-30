@@ -91,3 +91,10 @@ instance : LawfulCodec Property where
 instance : ChunkItem Property where
   h_pos      := Property.byteSize_pos
   h_consumed := Property.parser_len_consumed
+
+theorem Property.serialize_len (p : Property) :
+    (Property.serialize p).length = GetByteSize.byteSize p := by
+  simp only [Property.serialize, GetByteSize.byteSize, Property.byteSize]
+  simp only [List.length_append]
+  simp only [Property.serializeKind_length (Property.getKind p.id) p.val]
+  rfl

@@ -69,4 +69,9 @@ theorem ReasonCode.reconstruct {p : PktKind} {prc : ReasonCode p} {input rest : 
   · next h_invalid =>
     contradiction
 
+theorem ReasonCode.serialize_len {p : PktKind} (r : ReasonCode p) :
+    (ReasonCode.serialize r).length = GetByteSize.byteSize r := by
+  simp only [ReasonCode.serialize, GetByteSize.byteSize, ReasonCode.byteSize]
+  rfl
+
 end Mqtt

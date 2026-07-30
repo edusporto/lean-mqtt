@@ -22,3 +22,12 @@ theorem OptType.reconstruct {α : Type} [c : Codec α] [LawfulCodec α]
   | false, (), h =>
     injection h with h_pair
     injection h_pair with _ _
+
+theorem OptType.serialize_len {α : Type} [Codec α] [GetByteSize α] {b : Bool}
+    (v : OptType α b) (h_len : ∀ a : α, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    (OptType.serialize b v).length = GetByteSize.byteSize v := by
+  match b, v with
+  | true, val => exact h_len val
+  | false, () => rfl
+
+end Mqtt

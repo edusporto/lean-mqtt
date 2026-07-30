@@ -179,3 +179,15 @@ theorem SizedList.reconstruct {α lenTyp : Type}
   rw [h_sl]
 
   simp [List.append_assoc]
+
+theorem SizedList.serialize_len {α lenTyp : Type}
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
+    [Coe lenTyp Nat] [Codec lenTyp] [LawfulCodec lenTyp]
+    [GetByteSize lenTyp]
+    (sl : SizedList α lenTyp)
+    (h_lenTyp : ∀ a : lenTyp, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    (SizedList.serialize sl).length = GetByteSize.byteSize sl := by
+  simp only [SizedList.serialize, GetByteSize.byteSize, WithByteSize.byteSize]
+  simp only [List.length_append]
+  simp only [h_lenTyp sl.len.val, ChunkItem.serialize_list_length sl.val, ← sl.len_eq]
+  rfl

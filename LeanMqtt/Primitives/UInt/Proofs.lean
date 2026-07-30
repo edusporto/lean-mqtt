@@ -28,6 +28,14 @@ theorem UInt8.reconstruct {b : UInt8} {input rest : List UInt8} :
     subst h1 h2
     rfl
 
+theorem UInt8.serialize_len (n : UInt8) :
+    (Codec.serialize n).length = GetByteSize.byteSize n := by
+  rfl
+
+instance : LawfulCodec UInt8 where
+  roundtrip := UInt8.roundtrip
+  reconstruct := UInt8.reconstruct
+
 theorem UInt16.parser_len (n : UInt16) :
     n.serialize.length = 2 := by
   rfl
@@ -50,6 +58,10 @@ theorem UInt16.reconstruct {n : UInt16} {input rest : List UInt8} :
   rw [UInt8.reconstruct h_byte1, UInt8.reconstruct h_byte2]
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
+
+theorem UInt16.serialize_len (n : UInt16) :
+    (Codec.serialize n).length = GetByteSize.byteSize n := by
+  rfl
 
 instance : LawfulCodec UInt16 where
   roundtrip   := UInt16.roundtrip
@@ -84,9 +96,9 @@ theorem UInt32.reconstruct {n : UInt32} {input rest : List UInt8} :
   simp [UInt8.serialize, List.cons_append, List.nil_append]
   bv_decide
 
-instance : LawfulCodec UInt8 where
-  roundtrip := UInt8.roundtrip
-  reconstruct := UInt8.reconstruct
+theorem UInt32.serialize_len (n : UInt32) :
+    (Codec.serialize n).length = GetByteSize.byteSize n := by
+  rfl
 
 instance : LawfulCodec UInt32 where
   roundtrip := UInt32.roundtrip

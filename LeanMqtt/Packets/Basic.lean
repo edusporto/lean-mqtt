@@ -36,6 +36,13 @@ instance : Codec RawPacket where
   parser := RawPacket.parser
   serialize := RawPacket.serialize
 
+@[simp]
+def RawPacket.byteSize (p : RawPacket) : Nat :=
+  p.fh.byteSize + p.vh.byteSize + p.pl.byteSize
+
+instance : GetByteSize RawPacket where
+  byteSize := RawPacket.byteSize
+
 /--
 The complete representation of an MQTT control packet, combining the headers
 with the trailing payload data, validated to ensure sizes align.
@@ -50,7 +57,7 @@ def Packet.serialize (p : Packet) : List UInt8 :=
 def Packet.parser : Parser Packet :=
   PredType.parser _
 
--- TODO: Future alternative (Option 2):
+-- TODO: Future alternative for a `Packet` with the verified remaining length:
 -- We could consider dependently typing `Payload` directly with its expected length:
 -- `structure Payload (len : Nat) where ...`
 -- Then we could define `Packet` natively as:

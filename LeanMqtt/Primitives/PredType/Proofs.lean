@@ -31,4 +31,9 @@ theorem PredType.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] (gen : 
   · dsimp [failure, Alternative.failure, StateT.failure, Option.bind] at h
     contradiction
 
+theorem PredType.serialize_len {α : Type} [Codec α] [GetByteSize α] {gen : α → List Condition}
+    (v : PredType α gen) (h_len : ∀ a : α, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    (PredType.serialize v).length = GetByteSize.byteSize v := by
+  exact h_len v.val
+
 end Mqtt

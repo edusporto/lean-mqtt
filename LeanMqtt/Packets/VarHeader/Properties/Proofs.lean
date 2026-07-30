@@ -10,6 +10,10 @@ import LeanMqtt.Primitives.SizedList.Proofs
 namespace Mqtt
 open Mqtt
 
+theorem Properties.serialize_len (ps : Properties) :
+    (Properties.serialize ps).length = GetByteSize.byteSize ps := by
+  exact SizedList.serialize_len ps VarInt.serialize_len
+
 theorem Properties.roundtrip (ps : Properties) {rest : List UInt8} :
     Properties.parser.run (ps.serialize ++ rest) = some (ps, rest) :=
   SizedList.roundtrip ps
