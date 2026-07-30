@@ -19,18 +19,18 @@ A raw representation of an MQTT control packet, missing validation of the
 `FixedHeader`'s, remaining length (`FixedHeader.remaining_len`).
 -/
 structure RawPacket where
-  fh      : FixedHeader
-  vh      : VarHeader fh
-  payload : Payload
+  fh : FixedHeader
+  vh : VarHeader fh
+  pl : Payload
 
 def RawPacket.serialize (p : RawPacket) : List UInt8 :=
-  p.fh.serialize ++ p.vh.serialize p.fh ++ p.payload.serialize
+  p.fh.serialize ++ p.vh.serialize p.fh ++ p.pl.serialize
 
 def RawPacket.parser : Parser RawPacket := do
   let fh ← FixedHeader.parser
   let vh ← VarHeader.parser fh
-  let payload ← Payload.parser
-  return ⟨fh, vh, payload⟩
+  let pl ← Payload.parser
+  return ⟨fh, vh, pl⟩
 
 instance : Codec RawPacket where
   parser := RawPacket.parser
@@ -42,7 +42,7 @@ with the trailing payload data, validated to ensure sizes align.
 -/
 abbrev Packet :=
   PredType RawPacket fun p =>
-    [ensure! p.vh.byteSize + p.payload.byteSize = p.fh.remaining_len.val]
+    [ensure! p.vh.byteSize + p.pl.byteSize = p.fh.remaining_len.val]
 
 def Packet.serialize (p : Packet) : List UInt8 :=
   RawPacket.serialize p.val
