@@ -1,5 +1,6 @@
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Core.Codec
+import LeanMqtt.Core.WithByteSize
 
 namespace Mqtt
 
@@ -86,5 +87,12 @@ def VarInt.parser : Parser VarInt := do
 instance : Codec VarInt where
   parser := VarInt.parser
   serialize := VarInt.serialize
+
+@[simp]
+def VarInt.byteSize (v : VarInt) : Nat :=
+  (VarInt.serialize v).length
+
+instance : GetByteSize VarInt where
+  byteSize := VarInt.byteSize
 
 end Mqtt

@@ -174,4 +174,11 @@ def ReasonCode.parser (p : PktKind) : Parser (ReasonCode p) := do
   else
     failure
 
+/-- The size of a `ReasonCode` is 1, since it is always represented as a byte. -/
+@[simp]
+def ReasonCode.byteSize {p : PktKind} (_ : ReasonCode p) : Nat := 1
+
+instance {p : PktKind} : GetByteSize (ReasonCode p) where
+  byteSize := ReasonCode.byteSize
+
 end Mqtt

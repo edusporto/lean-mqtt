@@ -29,6 +29,9 @@ instance : Codec UInt8 where
   parser := UInt8.parser
   serialize := UInt8.serialize
 
+@[simp] def UInt8.byteSize (_ : UInt8) : Nat := 1
+instance : GetByteSize UInt8 where byteSize := UInt8.byteSize
+
 /- ========================================================================= -/
 /-! ## 16-bit Unsigned Integer (`UInt16`) -/
 
@@ -45,6 +48,9 @@ def UInt16.parser : Parser UInt16 := do
 instance : Codec UInt16 where
   parser := UInt16.parser
   serialize := UInt16.serialize
+
+@[simp] def UInt16.byteSize (_ : UInt16) : Nat := 2
+instance : GetByteSize UInt16 where byteSize := UInt16.byteSize
 
 /- ========================================================================= -/
 /-! ## 32-bit Unsigned Integer (`UInt32`) -/
@@ -69,6 +75,9 @@ def UInt32.parser : Parser UInt32 := do
 instance : Codec UInt32 where
   parser := UInt32.parser
   serialize := UInt32.serialize
+
+@[simp] def UInt32.byteSize (_ : UInt32) : Nat := 4
+instance : GetByteSize UInt32 where byteSize := UInt32.byteSize
 
 end Mqtt
 

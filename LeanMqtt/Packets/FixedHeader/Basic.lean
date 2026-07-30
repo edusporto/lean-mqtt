@@ -128,12 +128,12 @@ size into the final `FixedHeader` structure.
 structure FixedHeader where
   kind  : PktKind
   flags : PktFlags kind
-  -- TODO: model verification for `size` being indeed equal to the remaining byte length
-  size  : VarInt
+  -- NOTE: `remaining_len` verification done at the top-level (Packets.Basic)
+  remaining_len : VarInt
 
 def FixedHeader.serialize (h : FixedHeader) : List UInt8 :=
   let byte := h.kind.encode ++ PktFlags.encode h.kind h.flags
-  [UInt8.ofBitVec byte] ++ h.size.serialize
+  [UInt8.ofBitVec byte] ++ h.remaining_len.serialize
 
 def FixedHeader.parser : Parser FixedHeader := do
   let byte ← UInt8.parser
@@ -147,7 +147,14 @@ def FixedHeader.parser : Parser FixedHeader := do
   let kind ← PktKind.decode? kindBits
   let flags ← PktFlags.decode? kind flagsBits
 
-  let size ← VarInt.parser
-  return { kind, flags, size }
+  let remaining_len ← VarInt.parser
+  return { kind, flags, remaining_len }
+
+@[simp]
+def FixedHeader.byteSize (h : FixedHeader) : Nat :=
+  1 + h.remaining_len.byteSize
+
+instance : GetByteSize FixedHeader where
+  byteSize := FixedHeader.byteSize
 
 end Mqtt

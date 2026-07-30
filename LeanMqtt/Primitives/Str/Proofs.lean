@@ -226,4 +226,22 @@ instance : LawfulCodec BinaryData where
   roundtrip := BinaryData.roundtrip
   reconstruct := BinaryData.reconstruct
 
+theorem Str.serialize_len (s : Str) : s.serialize.length = GetByteSize.byteSize s := by
+  simp [Str.serialize, GetByteSize.byteSize, List.length_append]
+  rw [UInt16.parser_len, String.serialize_len]
+  have h := s.len.property
+  simp [GetByteSize.byteSize] at h
+  omega
+
+theorem StrPair.serialize_len (p : StrPair) : p.serialize.length = GetByteSize.byteSize p := by
+  change (p.1.serialize ++ p.2.serialize).length = GetByteSize.byteSize p.1 + GetByteSize.byteSize p.2
+  rw [List.length_append, Str.serialize_len, Str.serialize_len]
+
+theorem BinaryData.serialize_len (b : BinaryData) : b.serialize.length = GetByteSize.byteSize b := by
+  simp [BinaryData.serialize, GetByteSize.byteSize, List.length_append]
+  rw [UInt16.parser_len]
+  have h := b.len.property
+  simp [GetByteSize.byteSize] at h
+  omega
+
 end Mqtt

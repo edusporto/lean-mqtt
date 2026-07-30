@@ -7,40 +7,56 @@ namespace Mqtt
 /-!
 # Top-Level Packets
 
-This module defines the overarching `Header` and `Packet` structures that assemble
-the Fixed Header, Variable Header, and Payload into complete MQTT control packets.
+This module defines the overarching `Packet` structure that assembles the Fixed Header,
+Variable Header, and Payload into complete MQTT control packets.
 -/
-
-/- ========================================================================= -/
-/-! ## Header Structure -/
-
-/--
-A dependently-typed structure combining a `FixedHeader` and its corresponding
-`VarHeader`.
--/
-structure Header where
-  fh : FixedHeader
-  vh : VarHeader fh
-
-def Header.serialize (h : Header) : List UInt8 :=
-  FixedHeader.serialize h.fh ++
-  VarHeader.serialize h.fh h.vh
-
-def Header.parser : Parser Header := do
-  let fh ← FixedHeader.parser
-  let vh ← VarHeader.parser fh
-  return { fh, vh }
 
 /- ========================================================================= -/
 /-! ## Packet Structure -/
 
 /--
-The complete representation of an MQTT control packet, combining the headers
-with the trailing payload data.
+A raw representation of an MQTT control packet, missing validation of the
+`FixedHeader`'s, remaining length (`FixedHeader.remaining_len`).
 -/
-structure Packet where
-  fixed_header : FixedHeader
-  var_header   : VarHeader fixed_header
-  payload      : Payload
+structure RawPacket where
+  fh      : FixedHeader
+  vh      : VarHeader fh
+  payload : Payload
+
+def RawPacket.serialize (p : RawPacket) : List UInt8 :=
+  p.fh.serialize ++ p.vh.serialize p.fh ++ p.payload.serialize
+
+def RawPacket.parser : Parser RawPacket := do
+  let fh ← FixedHeader.parser
+  let vh ← VarHeader.parser fh
+  let payload ← Payload.parser
+  return ⟨fh, vh, payload⟩
+
+instance : Codec RawPacket where
+  parser := RawPacket.parser
+  serialize := RawPacket.serialize
+
+/--
+The complete representation of an MQTT control packet, combining the headers
+with the trailing payload data, validated to ensure sizes align.
+-/
+abbrev Packet :=
+  PredType RawPacket fun p =>
+    [ensure! p.vh.byteSize + p.payload.byteSize = p.fh.remaining_len.val]
+
+def Packet.serialize (p : Packet) : List UInt8 :=
+  RawPacket.serialize p.val
+
+def Packet.parser : Parser Packet :=
+  PredType.parser _
+
+-- TODO: Future alternative (Option 2):
+-- We could consider dependently typing `Payload` directly with its expected length:
+-- `structure Payload (len : Nat) where ...`
+-- Then we could define `Packet` natively as:
+-- `structure Packet where`
+-- `  fh : FixedHeader`
+-- `  vh : VarHeader fh`
+-- `  payload : Payload (fh.size.val - vh.byteSize)`
 
 end Mqtt

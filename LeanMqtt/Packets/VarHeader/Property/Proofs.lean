@@ -56,16 +56,31 @@ theorem Property.reconstruct {p : Property} {input rest : List UInt8} :
   rw [VarInt.reconstruct h_idVal, Property.reconstruct_kind h_valVal, h_p]
   simp [List.append_assoc]
 
+theorem Property.serializeKind_length (k : Property.Kind) (val : Property.typeOfKind k) :
+    (Property.serializeKind k val).length = Property.byteSizeKind k val := by
+  cases k
+  · rfl
+  · rfl
+  · rfl
+  · rfl
+  · exact BinaryData.serialize_len val
+  · exact Str.serialize_len val
+  · exact StrPair.serialize_len val
+  · nomatch val
+
 theorem Property.parser_len_consumed {p : Property} {input rest : List UInt8} :
     Property.parser.run input = some (p, rest) → input.length = p.byteSize + rest.length := by
   intro h
   have h_eq := Property.reconstruct h
-  simp [h_eq, List.length_append]
+  rw [h_eq]
+  simp [Property.serialize, Property.byteSize]
+  have h_kind := Property.serializeKind_length (getKind p.id) p.val
+  grind
 
 theorem Property.byteSize_pos (p : Property) : 0 < p.byteSize := by
   -- We always encode the id as a `VarInt`, so the byte size of a
   -- property must always be over 0
-  simp [Property.byteSize, Property.serialize]
+  simp [Property.byteSize]
   unfold VarInt.serialize
   grind
 

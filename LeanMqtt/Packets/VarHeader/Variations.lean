@@ -69,6 +69,16 @@ def Var_Connect.parser : Parser Var_Connect := do
   let props ← Properties.parser
   return { protocol_name, protocol_version, connect_flags, props }
 
+@[simp]
+def Var_Connect.byteSize (v : Var_Connect) : Nat :=
+  v.protocol_name.byteSize +
+  v.protocol_version.byteSize +
+  v.connect_flags.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Connect where
+  byteSize := Var_Connect.byteSize
+
 /- ========================================================================= -/
 /-! ## CONNACK Variable Header (`Var_Connack`) -/
 
@@ -97,6 +107,15 @@ def Var_Connack.parser : Parser Var_Connack := do
   let props       ← Properties.parser
   return { ack_flags, reason_code, props }
 
+@[simp]
+def Var_Connack.byteSize (v : Var_Connack) : Nat :=
+  v.ack_flags.byteSize +
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Connack where
+  byteSize := Var_Connack.byteSize
+
 /- ========================================================================= -/
 /-! ## PUBLISH Variable Header (`Var_Publish`) -/
 
@@ -124,6 +143,15 @@ def Var_Publish.parser (qos : QoSBits) : Parser (Var_Publish qos) := do
 
   return { topic_name, packet_id, props }
 
+@[simp]
+def Var_Publish.byteSize {qos : QoSBits} (v : Var_Publish qos) : Nat :=
+  v.topic_name.byteSize +
+  v.packet_id.byteSize +
+  v.props.byteSize
+
+instance {qos : QoSBits} : GetByteSize (Var_Publish qos) where
+  byteSize := Var_Publish.byteSize
+
 /- ========================================================================= -/
 /-! ## PUBACK Variable Header (`Var_Puback`) -/
 
@@ -144,6 +172,15 @@ def Var_Puback.parser : Parser (Var_Puback) := do
   let reason_code ← ReasonCode.parser .puback
   let props ← Properties.parser
   return { packet_id, reason_code, props }
+
+@[simp]
+def Var_Puback.byteSize (v : Var_Puback) : Nat :=
+  v.packet_id.byteSize +
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Puback where
+  byteSize := Var_Puback.byteSize
 
 /- ========================================================================= -/
 /-! ## PUBREC Variable Header (`Var_Pubrec`) -/
@@ -166,6 +203,15 @@ def Var_Pubrec.parser : Parser (Var_Pubrec) := do
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
+@[simp]
+def Var_Pubrec.byteSize (v : Var_Pubrec) : Nat :=
+  v.packet_id.byteSize +
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Pubrec where
+  byteSize := Var_Pubrec.byteSize
+
 /- ========================================================================= -/
 /-! ## PUBREL Variable Header (`Var_Pubrel`) -/
 
@@ -186,6 +232,15 @@ def Var_Pubrel.parser : Parser (Var_Pubrel) := do
   let reason_code ← ReasonCode.parser .pubrel
   let props ← Properties.parser
   return { packet_id, reason_code, props }
+
+@[simp]
+def Var_Pubrel.byteSize (v : Var_Pubrel) : Nat :=
+  v.packet_id.byteSize +
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Pubrel where
+  byteSize := Var_Pubrel.byteSize
 
 /- ========================================================================= -/
 /-! ## PUBCOMP Variable Header (`Var_Pubcomp`) -/
@@ -208,6 +263,15 @@ def Var_Pubcomp.parser : Parser (Var_Pubcomp) := do
   let props ← Properties.parser
   return { packet_id, reason_code, props }
 
+@[simp]
+def Var_Pubcomp.byteSize (v : Var_Pubcomp) : Nat :=
+  v.packet_id.byteSize +
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Pubcomp where
+  byteSize := Var_Pubcomp.byteSize
+
 /- ========================================================================= -/
 /-! ## SUBSCRIBE Variable Header (`Var_Subscribe`) -/
 
@@ -223,6 +287,14 @@ def Var_Subscribe.parser : Parser (Var_Subscribe) := do
   let packet_id ← UInt16.parser
   let props ← Properties.parser
   return { packet_id, props }
+
+@[simp]
+def Var_Subscribe.byteSize (v : Var_Subscribe) : Nat :=
+  v.packet_id.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Subscribe where
+  byteSize := Var_Subscribe.byteSize
 
 /- ========================================================================= -/
 /-! ## SUBACK Variable Header (`Var_Suback`) -/
@@ -240,6 +312,14 @@ def Var_Suback.parser : Parser (Var_Suback) := do
   let props ← Properties.parser
   return { packet_id, props }
 
+@[simp]
+def Var_Suback.byteSize (v : Var_Suback) : Nat :=
+  v.packet_id.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Suback where
+  byteSize := Var_Suback.byteSize
+
 /- ========================================================================= -/
 /-! ## UNSUBSCRIBE Variable Header (`Var_Unsubscribe`) -/
 
@@ -255,6 +335,14 @@ def Var_Unsubscribe.parser : Parser (Var_Unsubscribe) := do
   let packet_id ← UInt16.parser
   let props ← Properties.parser
   return { packet_id, props }
+
+@[simp]
+def Var_Unsubscribe.byteSize (v : Var_Unsubscribe) : Nat :=
+  v.packet_id.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Unsubscribe where
+  byteSize := Var_Unsubscribe.byteSize
 
 /- ========================================================================= -/
 /-! ## UNSUBACK Variable Header (`Var_Unsuback`) -/
@@ -272,6 +360,14 @@ def Var_Unsuback.parser : Parser (Var_Unsuback) := do
   let props ← Properties.parser
   return { packet_id, props }
 
+@[simp]
+def Var_Unsuback.byteSize (v : Var_Unsuback) : Nat :=
+  v.packet_id.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Unsuback where
+  byteSize := Var_Unsuback.byteSize
+
 /- ========================================================================= -/
 /-! ## PINGREQ Variable Header (`Var_Pingreq`) -/
 
@@ -280,6 +376,13 @@ abbrev Var_Pingreq  := Unit
 def Var_Pingreq.serialize (_ : Var_Pingreq) : List UInt8 := []
 def Var_Pingreq.parser : Parser (Var_Pingreq) := return ()
 
+@[simp]
+def Var_Pingreq.byteSize (_ : Var_Pingreq) : Nat := 0
+
+instance : GetByteSize Var_Pingreq where
+  byteSize := Var_Pingreq.byteSize
+
+
 /- ========================================================================= -/
 /-! ## PINGRESP Variable Header (`Var_Pingresp`) -/
 
@@ -287,6 +390,13 @@ abbrev Var_Pingresp := Unit
 
 def Var_Pingresp.serialize (_ : Var_Pingresp) : List UInt8 := []
 def Var_Pingresp.parser : Parser (Var_Pingresp) := return ()
+
+@[simp]
+def Var_Pingresp.byteSize (_ : Var_Pingresp) : Nat := 0
+
+instance : GetByteSize Var_Pingresp where
+  byteSize := Var_Pingresp.byteSize
+
 
 /- ========================================================================= -/
 /-! ## DISCONNECT Variable Header (`Var_Disconnect`) -/
@@ -306,6 +416,14 @@ def Var_Disconnect.parser : Parser (Var_Disconnect) := do
   let props ← Properties.parser
   return { reason_code, props }
 
+@[simp]
+def Var_Disconnect.byteSize (v : Var_Disconnect) : Nat :=
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Disconnect where
+  byteSize := Var_Disconnect.byteSize
+
 /- ========================================================================= -/
 /-! ## AUTH Variable Header (`Var_Auth`) -/
 
@@ -323,5 +441,13 @@ def Var_Auth.parser : Parser (Var_Auth) := do
   let reason_code ← ReasonCode.parser .auth
   let props ← Properties.parser
   return { reason_code, props }
+
+@[simp]
+def Var_Auth.byteSize (v : Var_Auth) : Nat :=
+  v.reason_code.byteSize +
+  v.props.byteSize
+
+instance : GetByteSize Var_Auth where
+  byteSize := Var_Auth.byteSize
 
 end Mqtt

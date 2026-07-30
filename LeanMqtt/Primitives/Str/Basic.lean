@@ -1,5 +1,6 @@
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Core.Codec
+import LeanMqtt.Core.WithByteSize
 
 namespace Mqtt
 
@@ -72,6 +73,13 @@ def StrPair.parser : Parser StrPair := do
 instance : Codec StrPair where
   parser := StrPair.parser
   serialize := StrPair.serialize
+
+@[simp]
+def StrPair.byteSize (p : StrPair) : Nat :=
+  p.1.byteSize + p.2.byteSize
+
+instance : GetByteSize StrPair where
+  byteSize := StrPair.byteSize
 
 /- ========================================================================= -/
 /-! ## Binary Data (`BinaryData`) -/

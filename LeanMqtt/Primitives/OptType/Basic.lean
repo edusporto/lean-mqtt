@@ -1,4 +1,5 @@
 import LeanMqtt.Core.Codec
+import LeanMqtt.Core.WithByteSize
 
 namespace Mqtt
 open Mqtt
@@ -43,3 +44,14 @@ def OptType.parser {α : Type} [c : Codec α] (b : Bool) : Parser (OptType α b)
   match b with
   | true  => @Codec.parser α c
   | false => pure ()
+
+@[simp]
+def OptType.byteSize {α : Type} [s : GetByteSize α] {b : Bool} (v : OptType α b) : Nat :=
+  match b with
+  | true  => s.byteSize (cast (by rfl) v)
+  | false => 0
+
+instance {α : Type} [s : GetByteSize α] (b : Bool) : GetByteSize (OptType α b) where
+  byteSize := OptType.byteSize
+
+end Mqtt

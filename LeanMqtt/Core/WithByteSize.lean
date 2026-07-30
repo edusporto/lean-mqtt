@@ -25,6 +25,12 @@ instance instStringByteLength : GetByteSize String where
 instance : GetByteSize (Array UInt8) where
   byteSize := Array.size
 
+@[simp]
+def Unit.byteSize (_ : Unit) : Nat := 0
+
+instance : GetByteSize Unit where
+  byteSize := Unit.byteSize
+
 -- class LengthEmbedding (lenTyp : Type) where
 --   toNat : lenTyp → Nat
 --   injective : Function.Injective toNat
@@ -62,6 +68,21 @@ def WithByteSize.of {α lenTyp} [s : GetByteSize α] [Coe lenTyp Nat]
     (h : s.byteSize val = ↑(OfNat.ofNat (s.byteSize val) : lenTyp) := by rfl) :
     WithByteSize α lenTyp :=
   ⟨val, ⟨OfNat.ofNat (s.byteSize val), h⟩⟩
+
+/--
+`GetByteSize` instance for `WithByteSize`. Recall that `len : lenTyp` is guaranteed to have
+the correct byte size. Thus, the final byte size is the size of `lenTyp` plus the value of `len`.
+-/
+@[simp]
+def WithByteSize.byteSize {α lenTyp : Type}
+    [s_val : GetByteSize α] [s_len : GetByteSize lenTyp] [Coe lenTyp Nat]
+    (w : WithByteSize α lenTyp) : Nat :=
+  s_len.byteSize w.len.val + w.len.val
+
+instance instGetByteSizeWithByteSize
+    {α lenTyp : Type} [s_val : GetByteSize α] [s_len : GetByteSize lenTyp] [Coe lenTyp Nat] :
+    GetByteSize (WithByteSize α lenTyp) where
+  byteSize := WithByteSize.byteSize
 
 /-!
 ### Note on generic binary parser generation (future DSL design)

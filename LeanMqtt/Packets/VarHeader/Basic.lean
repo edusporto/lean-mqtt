@@ -40,24 +40,24 @@ def VarHeader.getType (kind : PktKind) (flags : PktFlags kind) : Type :=
   | .auth, _        => Var_Auth
 
 def VarHeader.serializeValue
-    {kind : PktKind} {flags : PktFlags kind}
-    (value : VarHeader.getType kind flags) : List UInt8 :=
+    {kind : PktKind} {flags : PktFlags kind} :
+    VarHeader.getType kind flags → List UInt8 :=
   match kind, flags with
-  | .connect, _     => Var_Connect.serialize value
-  | .connack, _     => Var_Connack.serialize value
-  | .publish, f     => @Var_Publish.serialize f.qos value
-  | .puback, _      => Var_Puback.serialize value
-  | .pubrec, _      => Var_Pubrec.serialize value
-  | .pubrel, _      => Var_Pubrel.serialize value
-  | .pubcomp, _     => Var_Pubcomp.serialize value
-  | .subscribe, _   => Var_Subscribe.serialize value
-  | .suback, _      => Var_Suback.serialize value
-  | .unsubscribe, _ => Var_Unsubscribe.serialize value
-  | .unsuback, _    => Var_Unsuback.serialize value
-  | .pingreq, _     => Var_Pingreq.serialize value
-  | .pingresp, _    => Var_Pingresp.serialize value
-  | .disconnect, _  => Var_Disconnect.serialize value
-  | .auth, _        => Var_Auth.serialize value
+  | .connect, _     => Var_Connect.serialize
+  | .connack, _     => Var_Connack.serialize
+  | .publish, f     => @Var_Publish.serialize f.qos
+  | .puback, _      => Var_Puback.serialize
+  | .pubrec, _      => Var_Pubrec.serialize
+  | .pubrel, _      => Var_Pubrel.serialize
+  | .pubcomp, _     => Var_Pubcomp.serialize
+  | .subscribe, _   => Var_Subscribe.serialize
+  | .suback, _      => Var_Suback.serialize
+  | .unsubscribe, _ => Var_Unsubscribe.serialize
+  | .unsuback, _    => Var_Unsuback.serialize
+  | .pingreq, _     => Var_Pingreq.serialize
+  | .pingresp, _    => Var_Pingresp.serialize
+  | .disconnect, _  => Var_Disconnect.serialize
+  | .auth, _        => Var_Auth.serialize
 
 def VarHeader.parserValue
     (kind : PktKind) (flags : PktFlags kind)
@@ -91,5 +91,32 @@ def VarHeader.serialize (fh : FixedHeader) (vh : VarHeader fh) : List UInt8 :=
 
 def VarHeader.parser (fh : FixedHeader) : Parser (VarHeader fh) :=
   VarHeader.parserValue fh.kind fh.flags
+
+def VarHeader.byteSizeValue
+    {kind : PktKind} {flags : PktFlags kind} :
+    VarHeader.getType kind flags → Nat :=
+  match kind, flags with
+  | .connect, _     => Var_Connect.byteSize
+  | .connack, _     => Var_Connack.byteSize
+  | .publish, _     => Var_Publish.byteSize
+  | .puback, _      => Var_Puback.byteSize
+  | .pubrec, _      => Var_Pubrec.byteSize
+  | .pubrel, _      => Var_Pubrel.byteSize
+  | .pubcomp, _     => Var_Pubcomp.byteSize
+  | .subscribe, _   => Var_Subscribe.byteSize
+  | .suback, _      => Var_Suback.byteSize
+  | .unsubscribe, _ => Var_Unsubscribe.byteSize
+  | .unsuback, _    => Var_Unsuback.byteSize
+  | .pingreq, _     => Var_Pingreq.byteSize
+  | .pingresp, _    => Var_Pingresp.byteSize
+  | .disconnect, _  => Var_Disconnect.byteSize
+  | .auth, _        => Var_Auth.byteSize
+
+@[simp]
+def VarHeader.byteSize {fh : FixedHeader} (vh : VarHeader fh) : Nat :=
+  VarHeader.byteSizeValue vh
+
+instance (fh : FixedHeader) : GetByteSize (VarHeader fh) where
+  byteSize := VarHeader.byteSize
 
 end Mqtt

@@ -72,6 +72,17 @@ def Property.serializeKind (k : Property.Kind) (val : Property.typeOfKind k) : L
   | .pair   => val.serialize
   | .none   => nomatch val
 
+def Property.byteSizeKind (k : Property.Kind) (val : Property.typeOfKind k) : Nat :=
+  match k with
+  | .u8     => val.byteSize
+  | .u16    => val.byteSize
+  | .u32    => val.byteSize
+  | .varInt => val.byteSize
+  | .binary => val.byteSize
+  | .string => val.byteSize
+  | .pair   => val.byteSize
+  | .none   => nomatch val
+
 def Property.parserKind (k : Property.Kind) : Parser (Property.typeOfKind k) :=
   match k with
   | .u8     => UInt8.parser
@@ -105,7 +116,7 @@ def Property.parser : Parser Property := do
 
 @[simp]
 def Property.byteSize (p : Property) : Nat :=
-  p.serialize.length
+  p.id.byteSize + Property.byteSizeKind (Property.getKind p.id) p.val
 
 instance : GetByteSize Property where
   byteSize := Property.byteSize

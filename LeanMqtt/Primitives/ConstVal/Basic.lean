@@ -1,4 +1,5 @@
 import LeanMqtt.Core.Codec
+import LeanMqtt.Core.WithByteSize
 
 namespace Mqtt
 open Mqtt
@@ -30,5 +31,12 @@ def ConstVal.parser {α : Type} [c : Codec α] [DecidableEq α] (expected : α) 
     return ⟨val, h⟩
   else
     failure
+
+@[simp]
+def ConstVal.byteSize {α : Type} [GetByteSize α] {expected : α} (v : ConstVal α expected) : Nat :=
+  GetByteSize.byteSize v.val
+
+instance {α : Type} [GetByteSize α] {expected : α} : GetByteSize (ConstVal α expected) where
+  byteSize := ConstVal.byteSize
 
 end Mqtt

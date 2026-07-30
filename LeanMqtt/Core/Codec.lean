@@ -28,3 +28,5 @@ class LawfulCodec (α : Type) [Codec α] where
     Codec.parser.run (Codec.serialize a ++ rest) = some (a, rest)
   reconstruct : ∀ {a : α} {input rest : List UInt8},
     Codec.parser.run input = some (a, rest) → input = Codec.serialize a ++ rest
+
+end Mqtt

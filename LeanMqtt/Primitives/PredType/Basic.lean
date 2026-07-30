@@ -1,5 +1,6 @@
 import Lean
 import LeanMqtt.Core.Codec
+import LeanMqtt.Core.WithByteSize
 
 namespace Mqtt
 open Mqtt
@@ -63,6 +64,13 @@ def PredType.parser {α : Type} [c : Codec α] (gen : α → List Condition) : P
     return ⟨val, h⟩
   else
     failure
+
+@[simp]
+def PredType.byteSize {α : Type} [GetByteSize α] {gen : α → List Condition} (v : PredType α gen) : Nat :=
+  GetByteSize.byteSize v.val
+
+instance {α : Type} [GetByteSize α] {gen : α → List Condition} : GetByteSize (PredType α gen) where
+  byteSize := PredType.byteSize
 
 /- ========================================================================= -/
 /-! ## Ensure Macro -/
