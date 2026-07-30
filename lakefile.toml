@@ -12,7 +12,8 @@ name = "Helpers"
 name = "leanmqtt"
 root = "Main"
 
-[[require]]
-name = "batteries"
-scope = "leanprover-community"
-rev = "023ce7d62a0531e22a5331e20b587817a80d49ff"
+# Not used in the current version
+# [[require]]
+# name = "batteries"
+# scope = "leanprover-community"
+# rev = "023ce7d62a0531e22a5331e20b587817a80d49ff"
