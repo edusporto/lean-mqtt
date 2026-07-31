@@ -44,12 +44,20 @@ instance : GetByteSize RawPacket where
   byteSize := RawPacket.byteSize
 
 /--
+MQTT Control Packet predicate.
+
+- The Remaining Length field of a Fixed Header must be the sum of
+the sizes of the Variable Header and the Payload.
+-/
+abbrev PacketPred (p : RawPacket) : List Condition :=
+  [ensure! p.vh.byteSize + p.pl.byteSize = p.fh.remaining_len.val]
+
+/--
 The complete representation of an MQTT control packet, combining the headers
 with the trailing payload data, validated to ensure sizes align.
 -/
 abbrev Packet :=
-  PredType RawPacket fun p =>
-    [ensure! p.vh.byteSize + p.pl.byteSize = p.fh.remaining_len.val]
+  PredType RawPacket PacketPred
 
 def Packet.serialize (p : Packet) : List UInt8 :=
   RawPacket.serialize p.val
