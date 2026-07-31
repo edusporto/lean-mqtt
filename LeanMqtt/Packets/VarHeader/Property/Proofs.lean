@@ -98,3 +98,6 @@ theorem Property.serialize_len (p : Property) :
   simp only [List.length_append]
   simp only [Property.serializeKind_length (Property.getKind p.id) p.val]
   rfl
+
+instance : LawfulByteSize Property where
+  serialize_len := Property.serialize_len

@@ -32,8 +32,15 @@ theorem PredType.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] (gen : 
     contradiction
 
 theorem PredType.serialize_len {α : Type} [Codec α] [GetByteSize α] {gen : α → List Condition}
-    (v : PredType α gen) (h_len : ∀ a : α, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    (v : PredType α gen) [LawfulByteSize α] :
     (PredType.serialize v).length = GetByteSize.byteSize v := by
-  exact h_len v.val
+  exact LawfulByteSize.serialize_len v.val
+
+instance {α : Type} {gen : α → List Condition} [Codec α] [LawfulCodec α] : LawfulCodec (PredType α gen) where
+  roundtrip := PredType.roundtrip
+  reconstruct := PredType.reconstruct gen
+
+instance {α : Type} {gen : α → List Condition} [Codec α] [GetByteSize α] [LawfulCodec α] [LawfulByteSize α] : LawfulByteSize (PredType α gen) where
+  serialize_len := fun v => PredType.serialize_len v
 
 end Mqtt

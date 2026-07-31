@@ -180,14 +180,26 @@ theorem SizedList.reconstruct {α lenTyp : Type}
 
   simp [List.append_assoc]
 
+instance {α lenTyp : Type}
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
+    [Coe lenTyp Nat] [Codec lenTyp] [LawfulCodec lenTyp] :
+    LawfulCodec (SizedList α lenTyp) where
+  roundtrip := SizedList.roundtrip
+  reconstruct := SizedList.reconstruct
+
 theorem SizedList.serialize_len {α lenTyp : Type}
     [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α]
     [Coe lenTyp Nat] [Codec lenTyp] [LawfulCodec lenTyp]
-    [GetByteSize lenTyp]
-    (sl : SizedList α lenTyp)
-    (h_lenTyp : ∀ a : lenTyp, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    [GetByteSize lenTyp] [LawfulByteSize lenTyp]
+    (sl : SizedList α lenTyp) :
     (SizedList.serialize sl).length = GetByteSize.byteSize sl := by
   simp only [SizedList.serialize, GetByteSize.byteSize, WithByteSize.byteSize]
   simp only [List.length_append]
-  simp only [h_lenTyp sl.len.val, ChunkItem.serialize_list_length sl.val, ← sl.len_eq]
+  simp only [LawfulByteSize.serialize_len sl.len.val, ChunkItem.serialize_list_length sl.val, ← sl.len_eq]
   rfl
+
+instance {α lenTyp : Type}
+    [GetByteSize α] [Codec α] [LawfulCodec α] [ChunkItem α] [LawfulByteSize α]
+    [Coe lenTyp Nat] [Codec lenTyp] [GetByteSize lenTyp] [LawfulCodec lenTyp] [LawfulByteSize lenTyp] :
+    LawfulByteSize (SizedList α lenTyp) where
+  serialize_len := SizedList.serialize_len

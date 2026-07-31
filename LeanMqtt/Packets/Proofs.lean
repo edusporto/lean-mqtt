@@ -39,6 +39,18 @@ instance : LawfulCodec RawPacket where
   roundtrip := RawPacket.roundtrip
   reconstruct := RawPacket.reconstruct
 
+theorem RawPacket.serialize_len (p : RawPacket) :
+    p.serialize.length = GetByteSize.byteSize p := by
+  simp only [RawPacket.serialize, GetByteSize.byteSize, RawPacket.byteSize]
+  simp only [List.length_append]
+  simp only [FixedHeader.serialize_len p.fh,
+    VarHeader.serialize_len p.vh,
+    Payload.serialize_len p.pl]
+  rfl
+
+instance : LawfulByteSize RawPacket where
+  serialize_len := RawPacket.serialize_len
+
 theorem Packet.roundtrip (p : Packet) {rest : List UInt8} :
     Packet.parser.run (p.serialize ++ rest) = some (p, rest) := by
   simp [Packet.parser, Packet.serialize]
@@ -50,17 +62,11 @@ theorem Packet.reconstruct {p : Packet} {input rest : List UInt8} :
   intro h
   exact PredType.reconstruct _ h
 
-theorem RawPacket.serialize_len (p : RawPacket) :
-    p.serialize.length = GetByteSize.byteSize p := by
-  simp only [RawPacket.serialize, GetByteSize.byteSize, RawPacket.byteSize]
-  simp only [List.length_append]
-  simp only [FixedHeader.serialize_len p.fh,
-    VarHeader.serialize_len p.vh,
-    Payload.serialize_len p.pl]
-  rfl
-
 theorem Packet.serialize_len (p : Packet) :
-    p.serialize.length = GetByteSize.byteSize p := by
-  exact PredType.serialize_len p RawPacket.serialize_len
+    (Packet.serialize p).length = GetByteSize.byteSize p := by
+  exact PredType.serialize_len p
+
+instance : LawfulByteSize Packet where
+  serialize_len := Packet.serialize_len
 
 end Mqtt

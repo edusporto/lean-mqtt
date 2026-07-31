@@ -244,4 +244,13 @@ theorem BinaryData.serialize_len (b : BinaryData) : b.serialize.length = GetByte
   simp [GetByteSize.byteSize] at h
   omega
 
+instance : LawfulByteSize Str where
+  serialize_len := Str.serialize_len
+
+instance : LawfulByteSize StrPair where
+  serialize_len := StrPair.serialize_len
+
+instance : LawfulByteSize BinaryData where
+  serialize_len := BinaryData.serialize_len
+
 end Mqtt

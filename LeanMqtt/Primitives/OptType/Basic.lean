@@ -54,4 +54,8 @@ def OptType.byteSize {α : Type} [s : GetByteSize α] {b : Bool} (v : OptType α
 instance {α : Type} [s : GetByteSize α] (b : Bool) : GetByteSize (OptType α b) where
   byteSize := OptType.byteSize
 
+instance {α : Type} {b : Bool} [Codec α] : Codec (OptType α b) where
+  parser := OptType.parser b
+  serialize := OptType.serialize b
+
 end Mqtt

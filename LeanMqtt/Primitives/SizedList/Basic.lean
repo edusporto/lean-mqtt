@@ -85,9 +85,9 @@ Serializes a `SizedList` using a `Codec` for the length prefix
 and `ChunkItem` for the elements.
 -/
 def SizedList.serialize {α lenTyp : Type}
-    [GetByteSize α] [Coe lenTyp Nat] [Codec α] [ChunkItem α] [Codec lenTyp]
+    [GetByteSize α] [Codec α] [ChunkItem α] [Coe lenTyp Nat] [Codec lenTyp]
     (sl : SizedList α lenTyp) : List UInt8 :=
-  Codec.serialize sl.len.val ++ sl.val.flatMap Codec.serialize
+  Codec.serialize sl.len.val ++ (sl.val.flatMap Codec.serialize)
 
 /--
 Parses a `SizedList` with a `Codec` length prefix and `ChunkItem` elements
@@ -105,3 +105,10 @@ def SizedList.parser {α lenTyp : Type}
     exact h_chunk_len
 
   return { val := items, len := ⟨len, h_len⟩ }
+
+instance {α lenTyp : Type}
+    [GetByteSize α] [Codec α] [ChunkItem α]
+    [Coe lenTyp Nat] [Codec lenTyp] :
+    Codec (SizedList α lenTyp) where
+  parser := SizedList.parser
+  serialize := SizedList.serialize

@@ -271,4 +271,7 @@ theorem VarInt.serialize_len (v : VarInt) :
     (Codec.serialize v).length = GetByteSize.byteSize v := by
   rfl
 
+instance : LawfulByteSize VarInt where
+  serialize_len := VarInt.serialize_len
+
 end Mqtt

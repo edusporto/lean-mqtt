@@ -36,6 +36,9 @@ instance : LawfulCodec UInt8 where
   roundtrip := UInt8.roundtrip
   reconstruct := UInt8.reconstruct
 
+instance : LawfulByteSize UInt8 where
+  serialize_len := UInt8.serialize_len
+
 theorem UInt16.parser_len (n : UInt16) :
     n.serialize.length = 2 := by
   rfl
@@ -66,6 +69,9 @@ theorem UInt16.serialize_len (n : UInt16) :
 instance : LawfulCodec UInt16 where
   roundtrip   := UInt16.roundtrip
   reconstruct := UInt16.reconstruct
+
+instance : LawfulByteSize UInt16 where
+  serialize_len := UInt16.serialize_len
 
 theorem UInt32.parser_len (n : UInt32) :
     n.serialize.length = 4 := by
@@ -103,5 +109,8 @@ theorem UInt32.serialize_len (n : UInt32) :
 instance : LawfulCodec UInt32 where
   roundtrip := UInt32.roundtrip
   reconstruct := UInt32.reconstruct
+
+instance : LawfulByteSize UInt32 where
+  serialize_len := UInt32.serialize_len
 
 end Mqtt

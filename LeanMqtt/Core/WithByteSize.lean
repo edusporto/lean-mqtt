@@ -1,3 +1,5 @@
+import LeanMqtt.Core.Codec
+
 /-!
 # WithByteSize
 
@@ -14,6 +16,12 @@ A typeclass for types that have a definable byte size when serialized.
 -/
 class GetByteSize (α : Type u) where
   byteSize : α → Nat
+
+/--
+A typeclass formally tying a Codec's serialization length to its `GetByteSize`.
+-/
+class LawfulByteSize (α : Type) [Mqtt.Codec α] [GetByteSize α] where
+  serialize_len : ∀ (a : α), (Mqtt.Codec.serialize a).length = GetByteSize.byteSize a
 
 /-- The length of a string in MQTT is the number of bytes it contains in UTF-8. -/
 @[reducible]

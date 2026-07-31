@@ -33,8 +33,18 @@ theorem ConstVal.reconstruct {α : Type} [c : Codec α] [LawfulCodec α] [Decida
     contradiction
 
 theorem ConstVal.serialize_len {α : Type} [Codec α] [GetByteSize α] {expected : α}
-    (v : ConstVal α expected) (h_len : ∀ a : α, (Codec.serialize a).length = GetByteSize.byteSize a) :
+    (v : ConstVal α expected) [LawfulByteSize α] :
     (ConstVal.serialize v).length = GetByteSize.byteSize v := by
-  exact h_len v.val
+  exact LawfulByteSize.serialize_len v.val
+
+instance {α : Type} {expected : α}
+    [Codec α] [LawfulCodec α] [DecidableEq α] : LawfulCodec (ConstVal α expected) where
+  roundtrip := ConstVal.roundtrip expected
+  reconstruct := ConstVal.reconstruct expected
+
+instance {α : Type} {expected : α}
+    [Codec α] [GetByteSize α] [LawfulCodec α] [LawfulByteSize α] [DecidableEq α] :
+    LawfulByteSize (ConstVal α expected) where
+  serialize_len := fun v => ConstVal.serialize_len v
 
 end Mqtt

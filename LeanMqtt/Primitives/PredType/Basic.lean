@@ -90,4 +90,8 @@ macro "ensure! " p:term : term =>
   let desc := Lean.Syntax.mkStrLit (toString p.raw)
   `( { prop := $p, decd := inferInstance, desc := $desc } )
 
+instance {α : Type} {gen : α → List Condition} [Codec α] : Codec (PredType α gen) where
+  parser := PredType.parser gen
+  serialize := PredType.serialize
+
 end Mqtt

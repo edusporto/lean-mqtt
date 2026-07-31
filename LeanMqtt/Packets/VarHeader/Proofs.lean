@@ -42,9 +42,9 @@ theorem Var_Connect.serialize_len (v : Var_Connect) :
     v.serialize.length = GetByteSize.byteSize v := by
   simp only [Var_Connect.serialize, GetByteSize.byteSize, Var_Connect.byteSize]
   simp only [List.length_append]
-  simp only [ConstVal.serialize_len v.protocol_name Str.serialize_len,
-    ConstVal.serialize_len v.protocol_version UInt8.serialize_len,
-    PredType.serialize_len v.connect_flags UInt8.serialize_len,
+  simp only [ConstVal.serialize_len v.protocol_name,
+    ConstVal.serialize_len v.protocol_version,
+    PredType.serialize_len v.connect_flags,
     Properties.serialize_len v.props]
   rfl
 
@@ -74,7 +74,7 @@ theorem Var_Connack.serialize_len (v : Var_Connack) :
     v.serialize.length = GetByteSize.byteSize v := by
   simp only [Var_Connack.serialize, GetByteSize.byteSize, Var_Connack.byteSize]
   simp only [List.length_append]
-  simp only [PredType.serialize_len v.ack_flags UInt8.serialize_len,
+  simp only [PredType.serialize_len v.ack_flags,
     ReasonCode.serialize_len v.reason_code,
     Properties.serialize_len v.props]
   rfl
@@ -107,8 +107,8 @@ theorem Var_Publish.serialize_len {qos : QoSBits} (v : Var_Publish qos) :
     v.serialize.length = GetByteSize.byteSize v := by
   simp only [Var_Publish.serialize, GetByteSize.byteSize, Var_Publish.byteSize]
   simp only [List.length_append]
-  simp only [PredType.serialize_len v.topic_name Str.serialize_len,
-    OptType.serialize_len v.packet_id UInt16.serialize_len,
+  simp only [PredType.serialize_len v.topic_name,
+    OptType.serialize_len v.packet_id,
     Properties.serialize_len v.props]
   rfl
 

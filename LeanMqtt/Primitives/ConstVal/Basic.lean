@@ -39,4 +39,8 @@ def ConstVal.byteSize {α : Type} [GetByteSize α] {expected : α} (v : ConstVal
 instance {α : Type} [GetByteSize α] {expected : α} : GetByteSize (ConstVal α expected) where
   byteSize := ConstVal.byteSize
 
+instance {α : Type} {expected : α} [Codec α] [DecidableEq α] : Codec (ConstVal α expected) where
+  parser := ConstVal.parser expected
+  serialize := ConstVal.serialize
+
 end Mqtt
