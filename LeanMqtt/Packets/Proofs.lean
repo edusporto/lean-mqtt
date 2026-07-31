@@ -22,17 +22,13 @@ theorem RawPacket.reconstruct {p : RawPacket} {input rest : List UInt8} :
   step_parser h_run → fixVal rest1 h_fixVal
   step_parser h_run → varVal rest2 h_varVal
   step_parser h_run → payloadVal rest3 h_payloadVal
-
   finish_parser h_run → h_eq
 
   cases h_eq
-
   have h_fix_rec := FixedHeader.reconstruct h_fixVal
   have h_var_rec := VarHeader.reconstruct h_varVal
   have h_payload_rec := Payload.reconstruct h_payloadVal
-
   rw [h_fix_rec, h_var_rec, h_payload_rec]
-
   simp only [List.append_assoc]
 
 instance : LawfulCodec RawPacket where
