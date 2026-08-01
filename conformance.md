@@ -1,6 +1,6 @@
 # MQTT Conformance Statements
 
-Classifying MQTT conformance statements available in [Appendix B of the specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901292).
+Classifying MQTT conformance statements available in [Appendix B of the specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901292). The current classification could be changed in future versions of the project, as certain context-aware statements (depending on different packets or external information) might require more or less syntax or semantic relations.
 
 ## Syntax-related normative statements
 
@@ -12,7 +12,7 @@ Classifying MQTT conformance statements available in [Appendix B of the specific
 
 ### Shape-defining statements
 
-These rules define the shape of data expected in each packet. They will probably be `structure`s or `inductive` types in Lean. Some dependent properties in the next section might also define shape.
+These rules define the shape of data expected in each packet. They will probably be `structure`s or `inductive` types in Lean. Some dependent properties in the next section might also define shape, and some shapes may be better represented as a property.
 
 **Statements**:
 - [MQTT-3.1.3-1]
@@ -62,7 +62,7 @@ These rules define the shape of data expected in each packet. They will probably
 
 ### Property-defining statements
 
-These rules are propositions (probably of type `Prop` in Lean) which define constraints, invariants, or dependent properties that valid packets must follow. Some dependent properties might also define shape.
+These rules are propositions (probably of sort `Prop` in Lean) which define constraints, invariants, or dependent properties that valid packets must follow. Some dependent properties might also define shape.
 
 - [MQTT-1.5.4-1]
     > The character data in a UTF-8 Encoded String MUST be well-formed UTF-8 as defined by the Unicode specification [Unicode] and restated in RFC 3629 [RFC3629]. In particular, the character data MUST NOT include encodings of code points between U+D800 and U+DFFF.
@@ -156,8 +156,6 @@ These rules are propositions (probably of type `Prop` in Lean) which define cons
     > A Shared Subscription's Topic Filter MUST start with $share/ and MUST contain a ShareName that is at least one character long.
 - [MQTT-4.8.2-2]
     > The ShareName MUST NOT contain the characters "/", "+" or "#", but MUST be followed by a "/" character. This "/" character MUST be followed by a Topic Filter.
-- [MQTT-4.13.1-1]
-    > When a Server detects a Malformed Packet or Protocol Error, and a Reason Code is given in the specification, it MUST close the Network Connection.
 
 ## Semantics-related normative statements
 
@@ -243,6 +241,8 @@ These rules are propositions (probably of type `Prop` in Lean) which define cons
 * Error handling logic and its effect on state.
 
 **Statements**:
+- [MQTT-4.13.1-1]
+    > When a Server detects a Malformed Packet or Protocol Error, and a Reason Code is given in the specification, it MUST close the Network Connection.
 - [MQTT-3.1.2-4]
     > If a CONNECT packet is received with Clean Start is set to 1, the Client and Server MUST discard any existing Session and start a new Session.
 - [MQTT-3.1.2-5]
