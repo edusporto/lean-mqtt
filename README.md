@@ -17,9 +17,11 @@ Most modules are split into two files:
 * `Basic.lean`: Contains the data structures, serializers, and parsers.
 * `Proofs.lean`: Contains the formal verification theorems (satisfying the `LawfulCodec` and `LawfulByteSize` type classes).
 
-## Building and Usage
+## Requirements
 
 To build the project, you will need a working Lean 4 toolchain. To install it, check the instructions at the [official Lean 4 website](https://lean-lang.org/install/). The standard approach is to install it via [`elan`](https://github.com/leanprover/elan).
+
+## Installation
 
 The main contribution in this phase of the project is the collection of working proofs. To compile the code and verify all proofs, run:
 
