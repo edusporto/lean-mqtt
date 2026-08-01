@@ -15,15 +15,16 @@ theorem PktFlags.roundtrip (k : PktKind) (f : PktFlags k) :
     PktFlags.decode? k (PktFlags.encode k f) = some f := by
   cases k
   case publish =>
-    rcases f with ⟨dup, ⟨qos_val, h_qos⟩, retain⟩
-    simp [encode, decode?]
+    rcases f with ⟨⟨dup, ⟨qos_val, h_qos⟩, retain⟩, h_raw⟩
+    dsimp only [PktFlags.encode, PktFlags.decode?]
 
     have h_dup : BitVec.extractLsb 3 3 (dup ++ qos_val ++ retain) = dup := by bv_decide
     have h_q   : BitVec.extractLsb 2 1 (dup ++ qos_val ++ retain) = qos_val := by bv_decide
     have h_ret : BitVec.extractLsb 0 0 (dup ++ qos_val ++ retain) = retain := by bv_decide
 
-    simp [h_dup, h_q, h_ret]
-    assumption
+    rw [h_dup, h_q, h_ret]
+    rw [dif_pos h_qos]
+    rw [dif_pos h_raw]
 
   all_goals {
     rcases f with ⟨val, hval⟩
@@ -44,10 +45,12 @@ theorem PktFlags.reconstruct {k : PktKind} {b : BitVec 4} {f : PktFlags k} :
 
   case publish =>
     split at h
+    · split at h
+      · cases h
+        unfold PktFlags.encode
+        bv_decide
+      · contradiction
     · contradiction
-    · cases h
-      unfold PktFlags.encode
-      bv_decide
 
   all_goals {
     split at h

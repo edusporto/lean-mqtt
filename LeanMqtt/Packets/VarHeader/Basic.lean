@@ -25,7 +25,7 @@ def VarHeader.getType (kind : PktKind) (flags : PktFlags kind) : Type :=
   match kind, flags with
   | .connect, _     => Var_Connect
   | .connack, _     => Var_Connack
-  | .publish, f     => Var_Publish f.qos
+  | .publish, f     => Var_Publish f.val.qos
   | .puback, _      => Var_Puback
   | .pubrec, _      => Var_Pubrec
   | .pubrel, _      => Var_Pubrel
@@ -45,7 +45,7 @@ def VarHeader.serializeValue
   match kind, flags with
   | .connect, _     => Var_Connect.serialize
   | .connack, _     => Var_Connack.serialize
-  | .publish, f     => @Var_Publish.serialize f.qos
+  | .publish, f     => @Var_Publish.serialize f.val.qos
   | .puback, _      => Var_Puback.serialize
   | .pubrec, _      => Var_Pubrec.serialize
   | .pubrel, _      => Var_Pubrel.serialize
@@ -65,7 +65,7 @@ def VarHeader.parserValue
   match kind, flags with
   | .connect, _     => Var_Connect.parser
   | .connack, _     => Var_Connack.parser
-  | .publish, f     => Var_Publish.parser f.qos
+  | .publish, f     => Var_Publish.parser f.val.qos
   | .puback, _      => Var_Puback.parser
   | .pubrec, _      => Var_Pubrec.parser
   | .pubrel, _      => Var_Pubrel.parser

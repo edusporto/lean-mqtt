@@ -1,6 +1,7 @@
 import LeanMqtt.Primitives.UInt.Basic
 import LeanMqtt.Primitives.VarInt.Basic
 import LeanMqtt.Primitives.ConstVal.Basic
+import LeanMqtt.Primitives.PredType.Basic
 import LeanMqtt.Helpers.EnumUtils
 
 namespace Mqtt
@@ -48,11 +49,16 @@ enum_with_codec PktKind : BitVec 4 where
 
 abbrev QoSBits := { q : BitVec 2 // q ≠ 0b11 }
 
-structure PublishFlags where
+structure RawPublishFlags where
   dup    : BitVec 1
   qos    : QoSBits
   retain : BitVec 1
 deriving Repr, BEq
+
+def PublishFlagsPred (r : RawPublishFlags) : List Condition :=
+  [ ensure! ¬(r.dup = 1 ∧ r.qos.val = 0) ]
+
+abbrev PublishFlags := PredType RawPublishFlags PublishFlagsPred
 
 /--
 Defines the 4-bit flags specific to each packet kind.
@@ -78,7 +84,7 @@ def PktFlags : PktKind → Type
   | .auth        => ConstVal (BitVec 4) (0b0000)
 
 def PktFlags.encode : (k : PktKind) → PktFlags k → BitVec 4
-  | .publish, f     => f.dup ++ f.qos.val ++ f.retain
+  | .publish, f     => f.val.dup ++ f.val.qos.val ++ f.val.retain
   -- For all constant bits, we just extract the underlying BitVec value
   | .pubrel, f      => f.val
   | .subscribe, f   => f.val
@@ -105,9 +111,12 @@ def PktFlags.decode? (k : PktKind) (b : BitVec 4) : Option (PktFlags k) :=
       let dup    := b.extractLsb 3 3
       let qos    := b.extractLsb 2 1
       let retain := b.extractLsb 0 0
-      if qos = 0b11 then none
-      else if h : qos ≠ 3 then
-        some { dup, qos := ⟨qos, h⟩, retain }
+      if h1 : qos ≠ 3 then
+        let raw : RawPublishFlags := { dup, qos := ⟨qos, h1⟩, retain }
+        if h2 : AllHold PublishFlagsPred raw then
+          some ⟨raw, h2⟩
+        else
+          none
       else
         none
   | .pubrel | .subscribe | .unsubscribe =>
