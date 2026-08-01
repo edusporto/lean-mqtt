@@ -4,7 +4,7 @@ A formally verified parser and serializer for the MQTT 5.0 network protocol, wri
 
 This project uses dependent types to enforce correct-by-construction packet modeling. It also provides proofs for parser roundtrip (completeness) and reconstruction (soundness) across the implemented protocol layers. The current phase of the project will be presented at [SBLP 2026](https://cbsoft.sbc.org.br/2026/en/symposiums/sblp/call/). The most up-to-date code can be found in the [project's GitHub repository](https://github.com/edusporto/lean-mqtt).
 
-## Repository Structure
+## Project Structure
 
 The core source code is located in the `LeanMqtt/` directory, mirroring the MQTT protocol hierarchy:
 
@@ -21,7 +21,7 @@ Most modules are split into two files:
 
 To build the project, you will need a working Lean 4 toolchain. To install it, check the instructions at the [official Lean 4 website](https://lean-lang.org/install/). The standard approach is to install it via [`elan`](https://github.com/leanprover/elan).
 
-To compile the code and verify all proofs, run:
+The main contribution in this phase of the project is the collection of working proofs. To compile the code and verify all proofs, run:
 
 ```bash
 lake build
@@ -30,6 +30,10 @@ lake build
 The code is also thoroughly documented using standard Lean tooling. To build the documentation as an HTML web site, check out the instructions at the [`doc-gen4` repository](https://github.com/leanprover/doc-gen4).
 
 The current phase of the project focuses on the verification of the parser properties. Thus, we currently only implement the parser, with future work planned on implementing the full MQTT broker/client.
+
+## Specification Conformance
+
+We evaluate the implementation's adherence to the official specification through a measue of _conformance statements_. More information is found at [the `conformance.md` file](./conformance.md).
 
 ## Current Status & Future Work
 
