@@ -2,6 +2,43 @@
 
 Classifying MQTT conformance statements available in [Appendix B of the specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901292). The current classification could be changed in future versions of the project, as certain context-aware statements (depending on different packets or external information) might require more or less syntax or semantic relations.
 
+Before the list, we consider the following syntax-related statements currently implemented:
+
+- [MQTT-3.2.2-8]
+- [MQTT-3.3.2-1]
+- [MQTT-3.3.2-13]
+- [MQTT-3.3.2-19]
+- [MQTT-3.4.2-1]
+- [MQTT-3.5.2-1]
+- [MQTT-3.6.2-1]
+- [MQTT-3.7.2-1]
+- [MQTT-3.14.2-1]
+- [MQTT-3.15.2-1]
+- [MQTT-1.5.4-1]
+- [MQTT-1.5.5-1]
+- [MQTT-1.5.7-1]
+- [MQTT-2.1.3-1]
+- [MQTT-2.2.1-2]
+- [MQTT-2.2.2-1]
+- [MQTT-3.1.2-1]
+- [MQTT-3.1.2-2]
+- [MQTT-3.1.2-3]
+- [MQTT-3.1.2-11]
+- [MQTT-3.1.2-12]
+- [MQTT-3.1.2-13]
+- [MQTT-3.1.4-1]
+- [MQTT-3.2.2-1]
+- [MQTT-3.3.1-2]
+- [MQTT-3.3.1-4]
+- [MQTT-3.3.2-2]
+- [MQTT-3.6.1-1]
+- [MQTT-3.8.1-1]
+- [MQTT-3.10.1-1]
+- [MQTT-3.14.1-1]
+- [MQTT-3.15.1-1]
+- [MQTT-4.7.0-1]
+- [MQTT-4.7.3-3]
+
 ## Syntax-related normative statements
 
 **Includes**:
