@@ -110,7 +110,8 @@ theorem ChunkItem.parseChunkLoop_reconstruct {α : Type}
             obtain ⟨tail, h_tail_len⟩ := tail_val
 
             simp at h_parse
-            obtain ⟨h_a, h_as⟩ := h_parse
+            injection h_parse with h_list_eq
+            injection h_list_eq with h_a h_as
             subst h_a h_as
 
             -- Reconstruct the head
